@@ -9,7 +9,7 @@ Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e 
 - Gmail e Google Calendar sono usati esclusivamente in sola lettura.
 - La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.
-- L'accesso alla dashboard è protetto da una password familiare.
+- L'accesso alla dashboard è protetto da un account per persona (Nicolò e Jessica), ciascuno con la propria password.
 
 ## Configurazione una tantum
 
@@ -19,7 +19,8 @@ Importa questo repository in Vercel, crea un **Blob Store privato** collegato al
 
 ```text
 APP_URL=https://IL-TUO-PROGETTO.vercel.app
-APP_PASSWORD=una-password-familiare-lunga
+APP_PASSWORD_NICOLO=una-password-lunga-per-nicolo
+APP_PASSWORD_JESSICA=una-password-lunga-per-jessica
 SESSION_SECRET=almeno-32-caratteri-casuali
 CRON_SECRET=un-altro-segreto-lungo
 TOKEN_ENCRYPTION_KEY=64-caratteri-esadecimali
@@ -41,7 +42,7 @@ https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 
 ### 3. Primo accesso
 
-Apri l'indirizzo Vercel dal telefono, accedi con la password familiare e premi **Collega Google**. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
+Apri l'indirizzo Vercel dal telefono, accedi scegliendo il tuo nome e la tua password, poi premi **Collega Google**. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
 
 ## Sviluppo
 
