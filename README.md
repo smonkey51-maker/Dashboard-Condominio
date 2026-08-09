@@ -5,7 +5,7 @@ Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e 
 ## Come funziona
 
 - È pubblicata su Vercel: non servono PC acceso, Docker o server domestici.
-- Un Cron Job richiama la sincronizzazione ogni 2 ore.
+- Un Cron Job richiama la sincronizzazione una volta al giorno.
 - Gmail e Google Calendar sono usati esclusivamente in sola lettura.
 - La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.
@@ -41,7 +41,7 @@ https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 
 ### 3. Primo accesso
 
-Apri l'indirizzo Vercel dal telefono, accedi con la password familiare e premi **Collega Google**. Da quel momento la sincronizzazione è automatica ogni 2 ore; resta disponibile anche il pulsante **Aggiorna ora**.
+Apri l'indirizzo Vercel dal telefono, accedi con la password familiare e premi **Collega Google**. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
 
 ## Sviluppo
 
