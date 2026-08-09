@@ -59,7 +59,7 @@ export function attachSession(response: NextResponse, userId: string) {
   response.cookies.set(SESSION_COOKIE, createSessionValue(userId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
