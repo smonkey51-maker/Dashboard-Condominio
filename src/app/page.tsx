@@ -127,9 +127,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
           </section>
 
           <section className="metrics">
-            <article className="metric primary rv"><span className="icon-badge"><IconCoin /></span><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></article>
-            <article className="metric rv"><span className="icon-badge"><IconUsers /></span><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></article>
-            <article className="metric rv"><span className="icon-badge"><IconBell /></span><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></article>
+            <a className="metric primary rv" href="#pagamenti"><span className="icon-badge"><IconCoin /></span><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></a>
+            <a className="metric rv" href="#assemblee"><span className="icon-badge"><IconUsers /></span><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></a>
+            <a className="metric rv" href="#aggiornamenti"><span className="icon-badge"><IconBell /></span><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></a>
           </section>
 
           {!connected ? (
