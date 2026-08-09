@@ -79,40 +79,40 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         <header><strong className="mobile-logo">Euganeo Casa</strong><span>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "In attesa del primo aggiornamento"}</span></header>
         <div className="page-wrap">
           {notice && <div className={`notice ${notice.tone}`}>{notice.text}</div>}
-          <section className="intro" id="panoramica">
+          <section className="intro rv" id="panoramica">
             <div><p className="eyebrow">DASHBOARD PRIVATA</p><h1>La casa, sotto controllo.</h1><p>Pagamenti, assemblee e documenti del Condominio Euganeo, in un unico posto.</p></div>
             <span className="privacy-pill">● Solo famiglia</span>
           </section>
 
           <section className="metrics">
-            <article className="metric primary"><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></article>
-            <article className="metric"><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></article>
-            <article className="metric"><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></article>
+            <article className="metric primary rv"><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></article>
+            <article className="metric rv"><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></article>
+            <article className="metric rv"><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></article>
           </section>
 
           {!connected ? (
-            <section className="connect-card">
+            <section className="connect-card rv">
               <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà una volta al giorno.</p></div>
               <a className="button" href="/api/google/connect">Collega Google ↗</a>
             </section>
           ) : (
-            <section className="connect-card connected">
+            <section className="connect-card connected rv">
               <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente una volta al giorno. Puoi anche aggiornare adesso.</p></div>
               <form action="/api/sync" method="post"><button className="button">Aggiorna ora ↻</button></form>
             </section>
           )}
 
-          <section className="panel" id="aggiornamenti">
+          <section className="panel rv" id="aggiornamenti">
             <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2>Aggiornamenti</h2></div><span>{items.length} elementi</span></div>
             {items.length ? <div className="item-list">{items.slice(0, 12).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
           </section>
 
           <div className="grid-two">
-            <section className="panel" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
-            <section className="panel" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
+            <section className="panel rv" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
+            <section className="panel rv" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
           </div>
 
-          <section className="panel" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list">{documents.slice(0, 8).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
+          <section className="panel rv" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list">{documents.slice(0, 8).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
 
           <footer>Le email complete e gli allegati non vengono copiati: la dashboard conserva solo oggetto, mittente, data, breve anteprima e collegamento originale.</footer>
         </div>
