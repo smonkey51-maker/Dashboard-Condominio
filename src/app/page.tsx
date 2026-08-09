@@ -40,6 +40,16 @@ function Item({ item }: { item: SyncedItem }) {
   return item.source_url ? <a className="item-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="item-row">{content}</div>;
 }
 
+function MeetingItem({ item }: { item: SyncedItem }) {
+  const content = (
+    <>
+      <span className="meeting-date">{date(item.occurred_at)}</span>
+      <span className="meeting-desc">{item.summary || item.title}</span>
+    </>
+  );
+  return item.source_url ? <a className="meeting-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="meeting-row">{content}</div>;
+}
+
 const notices: Record<string, { tone: "success" | "error"; text: string }> = {
   "google:connected": { tone: "success", text: "Google collegato. Premi \"Aggiorna ora\" per la prima sincronizzazione." },
   "google:error": { tone: "error", text: "Non è stato possibile collegare Google. Riprova." },
@@ -114,7 +124,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
 
           <div className="grid-two">
             <section className="panel rv" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
-            <section className="panel rv" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
+            <section className="panel rv" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? <div className="item-list">{meetings.slice(0, 6).map((item) => <MeetingItem key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
           </div>
 
           <section className="panel rv" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list">{documents.slice(0, 8).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
