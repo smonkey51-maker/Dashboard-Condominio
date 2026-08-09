@@ -88,8 +88,8 @@ export default async function Home() {
           </section>
 
           <div className="grid-two">
-            <section className="panel" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={item.external_id} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
-            <section className="panel" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={item.external_id} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
+            <section className="panel" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
+            <section className="panel" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
           </div>
 
           <section className="panel" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list">{documents.slice(0, 8).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun documento rilevato.</div>}</section>

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!(await isAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    const result = await syncGoogle();
+    await syncGoogle();
     return NextResponse.redirect(new URL("/?sync=ok", request.url), 303);
   } catch (error) {
     return NextResponse.redirect(new URL("/?sync=error", request.url), 303);
