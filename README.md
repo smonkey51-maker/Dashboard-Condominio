@@ -8,8 +8,8 @@ Dashboard privata per monitorare comunicazioni, scadenze, assemblee e documenti 
 - Gmail e Google Calendar sono collegati con permessi **sola lettura**.
 - Il server conserva solo metadati utili: oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - I refresh token Google sono cifrati con AES-256-GCM prima di essere scritti nel database.
-- Il database SQLite integrato in Node resta nel volume locale `euganeo_data` e non viene incluso in Git.
-- L'app è pubblicata soltanto su rete privata; `docker-compose.yml` ascolta su `127.0.0.1`.
+- Il database SQLite integrato in Node resta nella cartella locale `data/` e non viene incluso in Git.
+- L'app viene eseguita direttamente con Node.js, senza Docker, ed è raggiungibile soltanto tramite la rete privata scelta.
 
 ## Funzionamento
 
@@ -32,23 +32,23 @@ https://IL-TUO-INDIRIZZO-PRIVATO/api/google/callback
 
 Usa esclusivamente gli scope `gmail.readonly` e `calendar.readonly`.
 
-### 2. Crea la configurazione privata
+### 2. Installa e configura
 
 ```bash
-cp .env.example .env
-openssl rand -hex 32   # TOKEN_ENCRYPTION_KEY
-openssl rand -base64 32 # SESSION_SECRET e CRON_SECRET
+npm install
+npm run setup
 ```
 
-Completa `.env` con URL privato e credenziali OAuth. Il file `.env` è ignorato da Git.
+La procedura guidata chiede indirizzo privato, password familiare e credenziali OAuth. Genera automaticamente tutte le chiavi di sicurezza e salva `.env`, che è ignorato da Git.
 
 ### 3. Avvia
 
 ```bash
-docker compose up -d --build
+npm run build
+npm start
 ```
 
-La dashboard ascolta soltanto su `http://127.0.0.1:3000`. Per usarla da telefono senza esporla su Internet, pubblicala tramite una rete privata come Tailscale Serve e invita esclusivamente i due utenti autorizzati.
+La dashboard ascolta su `http://127.0.0.1:3000`. Per usarla da telefono senza esporla su Internet, collegala a una rete privata come Tailscale Serve e invita esclusivamente i due utenti autorizzati. Il computer o NAS che la esegue deve restare acceso.
 
 ## Sviluppo
 
@@ -61,4 +61,4 @@ npm run build
 
 ## Sicurezza
 
-Non committare mai `.env`, `data/`, backup SQLite o esportazioni Gmail. Se la repository è stata resa pubblica temporaneamente, può tornare privata subito dopo la creazione del progetto.
+Non committare mai `.env`, `data/`, backup SQLite o esportazioni Gmail. La repository deve restare privata.
