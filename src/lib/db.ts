@@ -37,7 +37,7 @@ export async function loadState(): Promise<AppState> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return emptyState();
   let result;
   try {
-    result = await get(STATE_PATH, { access: "private", useCache: false });
+    result = await get(STATE_PATH, { access: "private" });
   } catch (error) {
     console.error("Failed to read saved state from Vercel Blob", error);
     return emptyState();
