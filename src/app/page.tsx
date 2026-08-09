@@ -31,9 +31,18 @@ function Item({ item }: { item: SyncedItem }) {
   return item.source_url ? <a className="item-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="item-row">{content}</div>;
 }
 
-export default async function Home() {
+const notices: Record<string, { tone: "success" | "error"; text: string }> = {
+  "google:connected": { tone: "success", text: "Google collegato. Premi \"Aggiorna ora\" per la prima sincronizzazione." },
+  "google:error": { tone: "error", text: "Non è stato possibile collegare Google. Riprova." },
+  "sync:ok": { tone: "success", text: "Sincronizzazione completata." },
+  "sync:error": { tone: "error", text: "Sincronizzazione non riuscita. Riprova più tardi." },
+};
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ google?: string; sync?: string }> }) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) redirect("/login");
+  const { google, sync } = await searchParams;
+  const notice = notices[`google:${google}`] || notices[`sync:${sync}`];
   const { items, lastRun, connected } = await dashboardData();
   const payments = items.filter((item) => item.kind === "payment");
   const meetings = items.filter((item) => item.kind === "assembly");
@@ -61,6 +70,7 @@ export default async function Home() {
       <section className="content" id="top">
         <header><strong className="mobile-logo">Euganeo Casa</strong><span>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "In attesa del primo aggiornamento"}</span></header>
         <div className="page-wrap">
+          {notice && <div className={`notice ${notice.tone}`}>{notice.text}</div>}
           <section className="intro" id="panoramica">
             <div><p className="eyebrow">DASHBOARD PRIVATA</p><h1>La casa, sotto controllo.</h1><p>Pagamenti, assemblee e documenti del Condominio Euganeo, in un unico posto.</p></div>
             <span className="privacy-pill">● Solo famiglia</span>
