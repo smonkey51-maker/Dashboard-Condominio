@@ -35,7 +35,13 @@ const emptyState = (): AppState => ({ items: [] });
 
 export async function loadState(): Promise<AppState> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return emptyState();
-  const result = await get(STATE_PATH, { access: "private", useCache: false });
+  let result;
+  try {
+    result = await get(STATE_PATH, { access: "private", useCache: false });
+  } catch (error) {
+    console.error("Failed to read saved state from Vercel Blob", error);
+    return emptyState();
+  }
   if (!result || result.statusCode !== 200 || !result.stream) return emptyState();
   const encrypted = await new Response(result.stream).text();
   return JSON.parse(decryptSecret(encrypted)) as AppState;
