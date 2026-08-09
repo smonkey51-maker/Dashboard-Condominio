@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import next from "next";
 import cron from "node-cron";
 
+process.env.NODE_ENV ||= "production";
 const port = Number(process.env.PORT || 3000);
 const app = next({ dev: false, hostname: "127.0.0.1", port });
 const handle = app.getRequestHandler();
