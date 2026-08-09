@@ -33,7 +33,7 @@ function Item({ item }: { item: SyncedItem }) {
 
 export default async function Home() {
   if (!(await isAuthenticated())) redirect("/login");
-  const { items, lastRun, connected } = dashboardData();
+  const { items, lastRun, connected } = await dashboardData();
   const payments = items.filter((item) => item.kind === "payment");
   const meetings = items.filter((item) => item.kind === "assembly");
   const documents = items.filter((item) => item.kind === "document" || item.attachment_count > 0);
@@ -72,12 +72,12 @@ export default async function Home() {
 
           {!connected ? (
             <section className="connect-card">
-              <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà ogni sei ore.</p></div>
+              <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà ogni due ore.</p></div>
               <a className="button" href="/api/google/connect">Collega Google ↗</a>
             </section>
           ) : (
             <section className="connect-card connected">
-              <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente ogni sei ore. Puoi anche aggiornare adesso.</p></div>
+              <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente ogni due ore. Puoi anche aggiornare adesso.</p></div>
               <form action="/api/sync" method="post"><button className="button">Aggiorna ora ↻</button></form>
             </section>
           )}
