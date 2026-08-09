@@ -67,6 +67,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         </div>
       </aside>
 
+      <nav className="pill-nav" aria-label="Navigazione principale">
+        <a className="active" href="#panoramica" aria-label="Panoramica">⌂</a>
+        <a href="#pagamenti" aria-label="Pagamenti">€</a>
+        <a href="#assemblee" aria-label="Assemblee">◫</a>
+        <a href="#documenti" aria-label="Documenti">▱</a>
+        <a href="#aggiornamenti" aria-label="Aggiornamenti">↻</a>
+      </nav>
+
       <section className="content" id="top">
         <header><strong className="mobile-logo">Euganeo Casa</strong><span>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "In attesa del primo aggiornamento"}</span></header>
         <div className="page-wrap">
