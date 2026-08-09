@@ -73,7 +73,10 @@ button, input, select { font: inherit; }
 
 .sidebar nav { display: grid; gap: 4px; margin-top: 48px; }
 .sidebar nav a {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 16px;
   border-radius: 999px;
   border: 1px solid transparent;
   color: var(--muted);
@@ -81,6 +84,7 @@ button, input, select { font: inherit; }
   font-weight: 600;
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
+.nav-icon { flex-shrink: 0; }
 .sidebar nav a:hover { color: var(--ink); background: var(--glass-strong); border-color: var(--glass-border); }
 .sidebar nav a.active {
   color: var(--green-deep);
@@ -211,7 +215,20 @@ button, input, select { font: inherit; }
   -webkit-backdrop-filter: blur(22px) saturate(160%);
 }
 .connect-card.connected { border-color: rgba(195, 217, 154, 0.16); }
-.connect-card h2, .panel h2 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 27px; font-weight: 500; color: var(--ink); }
+.connect-card h2, .panel h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; font-family: Georgia, serif; font-size: 27px; font-weight: 500; color: var(--ink); }
+
+.icon-badge {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--glass-strong);
+  color: var(--lime);
+  flex-shrink: 0;
+}
+.metric .icon-badge { color: var(--ink); margin-bottom: 12px; }
+.metric.primary .icon-badge { background: rgba(22, 40, 31, 0.14); color: var(--green-deep); }
 .connect-card p:last-child { margin: 0; color: var(--muted); max-width: 620px; }
 
 .button {
