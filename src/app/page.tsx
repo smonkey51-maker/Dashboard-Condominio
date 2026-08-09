@@ -21,6 +21,10 @@ function syncDate(value: string) {
   return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
+function meetingDate(value: string) {
+  return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
 const labels: Record<string, string> = {
   assembly: "Assemblea",
   payment: "Pagamento",
@@ -43,7 +47,7 @@ function Item({ item }: { item: SyncedItem }) {
 function MeetingItem({ item }: { item: SyncedItem }) {
   const content = (
     <>
-      <span className="meeting-date">{date(item.occurred_at)}</span>
+      <span className="meeting-date">{meetingDate(item.occurred_at)}</span>
       <span className="meeting-desc">{item.summary || item.title}</span>
     </>
   );
