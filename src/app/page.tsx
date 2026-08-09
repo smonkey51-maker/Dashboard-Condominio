@@ -44,14 +44,32 @@ function Item({ item }: { item: SyncedItem }) {
   return item.source_url ? <a className="item-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="item-row">{content}</div>;
 }
 
+function readableText(item: SyncedItem) {
+  const summary = (item.summary || "").trim();
+  const isBoilerplate = !summary || /preheader|unsubscribe|view (this|in) (the )?(email|browser)/i.test(summary);
+  return isBoilerplate ? item.title : summary;
+}
+
 function MeetingItem({ item }: { item: SyncedItem }) {
   const content = (
     <>
       <span className="meeting-date">{meetingDate(item.occurred_at)}</span>
-      <span className="meeting-desc">{item.summary || item.title}</span>
+      <span className="meeting-desc">{readableText(item)}</span>
     </>
   );
   return item.source_url ? <a className="meeting-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="meeting-row">{content}</div>;
+}
+
+const CONDOMINIO_IBAN = "IT10S0306912139100000010025";
+
+function PaymentItem({ item }: { item: SyncedItem }) {
+  const content = (
+    <>
+      <span className="payment-reason">{readableText(item)}</span>
+      <span className="payment-date">{date(item.occurred_at)}</span>
+    </>
+  );
+  return item.source_url ? <a className="payment-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="payment-row">{content}</div>;
 }
 
 const notices: Record<string, { tone: "success" | "error"; text: string }> = {
@@ -127,7 +145,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
           )}
 
           <div className="grid-two">
-            <section className="panel rv" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
+            <section className="panel rv" id="pagamenti">
+              <div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>
+              <p className="payment-iban">Bonifico su <code>{CONDOMINIO_IBAN}</code></p>
+              {payments.length ? <div className="item-list">{payments.slice(0, 6).map((item) => <PaymentItem key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun pagamento rilevato.</div>}
+            </section>
             <section className="panel rv" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? <div className="item-list">{meetings.slice(0, 6).map((item) => <MeetingItem key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
           </div>
 
