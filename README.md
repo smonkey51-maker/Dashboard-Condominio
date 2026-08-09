@@ -1,54 +1,47 @@
 # Euganeo Casa
 
-Dashboard privata per monitorare comunicazioni, scadenze, assemblee e documenti del Condominio Euganeo.
+Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e documenti del Condominio Euganeo.
 
-## Privacy by design
+## Come funziona
 
-- Il repository contiene esclusivamente codice: nessuna email, evento, password o token.
-- Gmail e Google Calendar sono collegati con permessi **sola lettura**.
-- Il server conserva solo metadati utili: oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
-- I refresh token Google sono cifrati con AES-256-GCM prima di essere scritti nel database.
-- Il database SQLite integrato in Node resta nella cartella locale `data/` e non viene incluso in Git.
-- L'app viene eseguita direttamente con Node.js, senza Docker, ed è raggiungibile soltanto tramite la rete privata scelta.
+- È pubblicata su Vercel: non servono PC acceso, Docker o server domestici.
+- Un Cron Job richiama la sincronizzazione ogni 2 ore.
+- Gmail e Google Calendar sono usati esclusivamente in sola lettura.
+- La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
+- Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.
+- L'accesso alla dashboard è protetto da una password familiare.
 
-## Funzionamento
+## Configurazione una tantum
 
-1. Il proprietario accede con la password familiare.
-2. Collega una volta l'account Google dalla dashboard.
-3. Il server cerca soltanto le comunicazioni che corrispondono a “Condominio Euganeo” o “Euganeo”.
-4. La sincronizzazione parte all'avvio e automaticamente ogni 6 ore.
+### 1. Vercel
 
-## Installazione
+Importa questo repository in Vercel, crea un **Blob Store privato** collegato al progetto e aggiungi queste variabili in Production:
 
-### 1. Configura Google OAuth
+```text
+APP_URL=https://IL-TUO-PROGETTO.vercel.app
+APP_PASSWORD=una-password-familiare-lunga
+SESSION_SECRET=almeno-32-caratteri-casuali
+CRON_SECRET=un-altro-segreto-lungo
+TOKEN_ENCRYPTION_KEY=64-caratteri-esadecimali
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
 
-Nel Google Cloud Console crea un client OAuth di tipo **Web application** e abilita Gmail API e Google Calendar API.
+Il collegamento del Blob Store crea automaticamente `BLOB_READ_WRITE_TOKEN`.
+
+### 2. Google Cloud
+
+Abilita **Gmail API** e **Google Calendar API**, configura la schermata consenso OAuth e crea un client di tipo **Web application**.
 
 URI di reindirizzamento autorizzato:
 
 ```text
-https://IL-TUO-INDIRIZZO-PRIVATO/api/google/callback
+https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 ```
 
-Usa esclusivamente gli scope `gmail.readonly` e `calendar.readonly`.
+### 3. Primo accesso
 
-### 2. Installa e configura
-
-```bash
-npm install
-npm run setup
-```
-
-La procedura guidata chiede indirizzo privato, password familiare e credenziali OAuth. Genera automaticamente tutte le chiavi di sicurezza e salva `.env`, che è ignorato da Git.
-
-### 3. Avvia
-
-```bash
-npm run build
-npm start
-```
-
-La dashboard ascolta su `http://127.0.0.1:3000`. Per usarla da telefono senza esporla su Internet, collegala a una rete privata come Tailscale Serve e invita esclusivamente i due utenti autorizzati. Il computer o NAS che la esegue deve restare acceso.
+Apri l'indirizzo Vercel dal telefono, accedi con la password familiare e premi **Collega Google**. Da quel momento la sincronizzazione è automatica ogni 2 ore; resta disponibile anche il pulsante **Aggiorna ora**.
 
 ## Sviluppo
 
@@ -59,6 +52,4 @@ npm run lint
 npm run build
 ```
 
-## Sicurezza
-
-Non committare mai `.env`, `data/`, backup SQLite o esportazioni Gmail. La repository deve restare privata.
+Usa `.env.example` come riferimento e non committare mai `.env`, token o esportazioni Gmail. Mantieni il repository privato.
