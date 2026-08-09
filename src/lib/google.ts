@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { db, getSetting, setSetting } from "./db";
+import { loadState, saveState, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
 
 const scopes = [
@@ -25,7 +25,9 @@ export async function saveGoogleAuthorization(code: string) {
   const client = oauthClient();
   const { tokens } = await client.getToken(code);
   if (!tokens.refresh_token) throw new Error("Google did not return a refresh token");
-  setSetting("google_refresh_token", encryptSecret(tokens.refresh_token));
+  const state = await loadState();
+  state.googleRefreshToken = encryptSecret(tokens.refresh_token);
+  await saveState(state);
 }
 
 function attachmentCount(part: { filename?: string | null; parts?: unknown[] | null } | undefined): number {
@@ -42,12 +44,37 @@ function classify(subject: string, attachments: number) {
   return "update";
 }
 
+type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count"> & {
+  externalId: string;
+  occurredAt: string;
+  endsAt: string | null;
+  sourceUrl: string | null;
+  attachmentCount: number;
+};
+
+function normalize(item: IncomingItem): SyncedItem {
+  return {
+    source: item.source,
+    external_id: item.externalId,
+    kind: item.kind,
+    title: item.title,
+    sender: item.sender,
+    summary: item.summary,
+    occurred_at: item.occurredAt,
+    ends_at: item.endsAt,
+    location: item.location,
+    source_url: item.sourceUrl,
+    unread: item.unread,
+    attachment_count: item.attachmentCount,
+  };
+}
+
 export async function syncGoogle() {
-  const stored = getSetting("google_refresh_token");
-  if (!stored) throw new Error("Google account is not connected");
+  const state = await loadState();
+  if (!state.googleRefreshToken) throw new Error("Google account is not connected");
 
   const auth = oauthClient();
-  auth.setCredentials({ refresh_token: decryptSecret(stored) });
+  auth.setCredentials({ refresh_token: decryptSecret(state.googleRefreshToken) });
   const gmail = google.gmail({ version: "v1", auth });
   const calendar = google.calendar({ version: "v3", auth });
   const now = new Date();
@@ -63,7 +90,7 @@ export async function syncGoogle() {
     const message = response.data;
     const headers = Object.fromEntries((message.payload?.headers || []).map((header) => [header.name?.toLowerCase(), header.value || ""]));
     const attachments = attachmentCount(message.payload || undefined);
-    return {
+    return normalize({
       source: "gmail",
       externalId: id,
       kind: classify(headers.subject || "", attachments),
@@ -76,7 +103,7 @@ export async function syncGoogle() {
       sourceUrl: `https://mail.google.com/mail/#all/${id}`,
       unread: message.labelIds?.includes("UNREAD") ? 1 : 0,
       attachmentCount: attachments,
-    };
+    });
   }));
 
   const calendarResponse = await calendar.events.list({
@@ -89,7 +116,7 @@ export async function syncGoogle() {
     maxResults: 250,
   });
 
-  const events = (calendarResponse.data.items || []).filter((event) => event.id && event.summary).map((event) => ({
+  const events = (calendarResponse.data.items || []).filter((event) => event.id && event.summary).map((event) => normalize({
     source: "calendar",
     externalId: event.id!,
     kind: /assemblea|riunione|convocazione/i.test(event.summary || "") ? "assembly" : "event",
@@ -104,25 +131,19 @@ export async function syncGoogle() {
     attachmentCount: 0,
   }));
 
-  const upsert = db.prepare(`INSERT INTO synced_items
-    (source, external_id, kind, title, sender, summary, occurred_at, ends_at, location, source_url, unread, attachment_count, updated_at)
-    VALUES (@source, @externalId, @kind, @title, @sender, @summary, @occurredAt, @endsAt, @location, @sourceUrl, @unread, @attachmentCount, @updatedAt)
-    ON CONFLICT(source, external_id) DO UPDATE SET
-      kind=excluded.kind, title=excluded.title, sender=excluded.sender, summary=excluded.summary,
-      occurred_at=excluded.occurred_at, ends_at=excluded.ends_at, location=excluded.location,
-      source_url=excluded.source_url, unread=excluded.unread, attachment_count=excluded.attachment_count,
-      updated_at=excluded.updated_at`);
-
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    const updatedAt = new Date().toISOString();
-    for (const item of [...emails.filter(Boolean), ...events]) upsert.run({ ...item, updatedAt });
-    db.prepare("INSERT INTO sync_runs(synced_at, email_count, event_count, status) VALUES (?, ?, ?, 'success')")
-      .run(updatedAt, emails.filter(Boolean).length, events.length);
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
+  const merged = new Map(state.items.map((item) => [`${item.source}:${item.external_id}`, item]));
+  for (const item of [...emails.filter((item): item is SyncedItem => Boolean(item)), ...events]) {
+    merged.set(`${item.source}:${item.external_id}`, item);
   }
+  state.items = [...merged.values()]
+    .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
+    .slice(0, 300);
+  state.lastRun = {
+    synced_at: new Date().toISOString(),
+    email_count: emails.filter(Boolean).length,
+    event_count: events.length,
+    status: "success",
+  };
+  await saveState(state);
   return { emails: emails.filter(Boolean).length, events: events.length };
 }
