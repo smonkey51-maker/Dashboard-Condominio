@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import RevealController from "./RevealController";
 
 export const metadata: Metadata = {
   title: "Euganeo Casa",
@@ -11,5 +12,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="it"><body>{children}</body></html>;
+  return (
+    <html lang="it">
+      <body>
+        {children}
+        <RevealController />
+      </body>
+    </html>
+  );
 }

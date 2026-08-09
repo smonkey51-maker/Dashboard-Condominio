@@ -11,16 +11,16 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const { error } = await searchParams;
   return (
     <main className="login-shell">
-      <section className="login-card">
-        <span className="brand-mark">E</span>
-        <p className="eyebrow">EUGANEO CASA</p>
-        <h1>La casa,<br />sotto controllo.</h1>
-        <p>Dashboard privata per pagamenti, assemblee e documenti.</p>
-        <div className="login-actions">
+      <section className="login-card rv">
+        <span className="brand-mark rv">E</span>
+        <p className="eyebrow rv">EUGANEO CASA</p>
+        <h1 className="rv">La casa,<br />sotto controllo.</h1>
+        <p className="rv">Dashboard privata per pagamenti, assemblee e documenti.</p>
+        <div className="login-actions rv">
           <a className="button" href="/api/auth/google">Accedi con Google</a>
           {error && errors[error] && <span className="form-error">{errors[error]}</span>}
         </div>
-        <small>I dati restano nel server privato.</small>
+        <small className="rv">I dati restano nel server privato.</small>
       </section>
     </main>
   );
