@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { dashboardData, type SyncedItem } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,8 @@ function Item({ item }: { item: SyncedItem }) {
 }
 
 export default async function Home() {
-  if (!(await isAuthenticated())) redirect("/login");
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) redirect("/login");
   const { items, lastRun, connected } = await dashboardData();
   const payments = items.filter((item) => item.kind === "payment");
   const meetings = items.filter((item) => item.kind === "assembly");
@@ -52,6 +53,7 @@ export default async function Home() {
         </nav>
         <div className="sidebar-foot">
           <div className="sync-status"><span className={connected ? "dot live" : "dot"} /><div><strong>{connected ? "Google collegato" : "Google da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
+          <div className="sync-status"><span className="dot live" /><div><strong>{sessionUser.name}</strong><small>Utente collegato</small></div></div>
           <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
         </div>
       </aside>

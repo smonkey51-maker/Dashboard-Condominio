@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 
+const errors: Record<string, string> = {
+  denied: "Questo account Google non è autorizzato ad accedere.",
+  "1": "Accesso non riuscito. Riprova.",
+};
+
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await isAuthenticated()) redirect("/");
   const { error } = await searchParams;
@@ -11,12 +16,10 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
         <p className="eyebrow">EUGANEO CASA</p>
         <h1>La casa,<br />sotto controllo.</h1>
         <p>Dashboard privata per pagamenti, assemblee e documenti.</p>
-        <form action="/api/login" method="post">
-          <label htmlFor="password">Password familiare</label>
-          <input id="password" name="password" type="password" autoComplete="current-password" required autoFocus />
-          {error && <span className="form-error">Password non corretta.</span>}
-          <button type="submit">Accedi</button>
-        </form>
+        <div className="login-actions">
+          <a className="button" href="/api/auth/google">Accedi con Google</a>
+          {error && errors[error] && <span className="form-error">{errors[error]}</span>}
+        </div>
         <small>I dati restano nel server privato.</small>
       </section>
     </main>
