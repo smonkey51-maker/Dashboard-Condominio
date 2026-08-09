@@ -86,7 +86,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
       </nav>
 
       <section className="content" id="top">
-        <header><strong className="mobile-logo">Euganeo Casa</strong>{lastRun && <span>{`Aggiornato ${syncDate(lastRun.synced_at)}`}</span>}</header>
+        <header><strong className="mobile-logo">Euganeo Casa</strong>{lastRun && <span className="sync-pill">{`Aggiornato ${syncDate(lastRun.synced_at)}`}</span>}</header>
         <div className="page-wrap">
           {notice && <div className={`notice ${notice.tone}`}>{notice.text}</div>}
           <section className="intro rv" id="panoramica">
