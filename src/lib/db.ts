@@ -1,4 +1,4 @@
-import { get, put } from "@vercel/blob";
+import { list, put } from "@vercel/blob";
 import { decryptSecret, encryptSecret } from "./crypto";
 
 const STATE_PATH = "euganeo/state.enc";
@@ -35,16 +35,20 @@ const emptyState = (): AppState => ({ items: [] });
 
 export async function loadState(): Promise<AppState> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return emptyState();
-  let result;
   try {
-    result = await get(STATE_PATH, { access: "private" });
+    const { blobs } = await list({ prefix: STATE_PATH, limit: 1 });
+    const match = blobs.find((blob) => blob.pathname === STATE_PATH);
+    if (!match) return emptyState();
+    const response = await fetch(match.downloadUrl, {
+      headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+    });
+    if (!response.ok) throw new Error(`Failed to download state: ${response.status}`);
+    const encrypted = await response.text();
+    return JSON.parse(decryptSecret(encrypted)) as AppState;
   } catch (error) {
     console.error("Failed to read saved state from Vercel Blob", error);
     return emptyState();
   }
-  if (!result || result.statusCode !== 200 || !result.stream) return emptyState();
-  const encrypted = await new Response(result.stream).text();
-  return JSON.parse(decryptSecret(encrypted)) as AppState;
 }
 
 export async function saveState(state: AppState) {
