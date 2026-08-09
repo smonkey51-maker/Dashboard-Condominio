@@ -6,7 +6,8 @@ function loginOauthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const appUrl = process.env.APP_URL;
-  if (!clientId || !clientSecret || !appUrl) throw new Error("Google OAuth is not configured");
+  const missing = [!clientId && "GOOGLE_CLIENT_ID", !clientSecret && "GOOGLE_CLIENT_SECRET", !appUrl && "APP_URL"].filter(Boolean);
+  if (missing.length) throw new Error(`Google OAuth is not configured: missing ${missing.join(", ")}`);
   return new google.auth.OAuth2(clientId, clientSecret, `${appUrl}/api/auth/google/callback`);
 }
 
