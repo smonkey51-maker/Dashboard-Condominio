@@ -112,17 +112,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
             </section>
           )}
 
-          <section className="panel rv" id="aggiornamenti">
-            <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2><span className="icon-badge"><IconBell /></span>Aggiornamenti</h2></div><span>{items.length} elementi</span></div>
-            {items.length ? <div className="item-list">{items.slice(0, 12).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
-          </section>
-
           <div className="grid-two">
             <section className="panel rv" id="pagamenti"><div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>{payments.length ? payments.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessun pagamento rilevato.</div>}</section>
             <section className="panel rv" id="assemblee"><div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>{meetings.length ? meetings.slice(0, 6).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />) : <div className="empty small">Nessuna assemblea rilevata.</div>}</section>
           </div>
 
           <section className="panel rv" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list">{documents.slice(0, 8).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
+
+          <section className="panel rv" id="aggiornamenti">
+            <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2><span className="icon-badge"><IconBell /></span>Aggiornamenti</h2></div><span>{items.length} elementi</span></div>
+            {items.length ? <div className="item-list">{items.slice(0, 5).map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
+          </section>
 
           <footer>Le email complete e gli allegati non vengono copiati: la dashboard conserva solo oggetto, mittente, data, breve anteprima e collegamento originale.</footer>
         </div>
