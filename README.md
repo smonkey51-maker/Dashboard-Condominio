@@ -9,7 +9,7 @@ Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e 
 - Gmail e Google Calendar sono usati esclusivamente in sola lettura.
 - La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.
-- L'accesso alla dashboard è protetto da un account per persona (Nicolò e Jessica), ciascuno con la propria password.
+- L'accesso alla dashboard avviene con **Accedi con Google**: solo i due account Google autorizzati (Nicolò e Jessica) possono entrare, niente password da ricordare.
 
 ## Configurazione una tantum
 
@@ -19,8 +19,8 @@ Importa questo repository in Vercel, crea un **Blob Store privato** collegato al
 
 ```text
 APP_URL=https://IL-TUO-PROGETTO.vercel.app
-APP_PASSWORD_NICOLO=una-password-lunga-per-nicolo
-APP_PASSWORD_JESSICA=una-password-lunga-per-jessica
+GOOGLE_LOGIN_EMAIL_NICOLO=email-google-di-nicolo@gmail.com
+GOOGLE_LOGIN_EMAIL_JESSICA=email-google-di-jessica@gmail.com
 SESSION_SECRET=almeno-32-caratteri-casuali
 CRON_SECRET=un-altro-segreto-lungo
 TOKEN_ENCRYPTION_KEY=64-caratteri-esadecimali
@@ -34,15 +34,16 @@ Il collegamento del Blob Store crea automaticamente `BLOB_READ_WRITE_TOKEN`.
 
 Abilita **Gmail API** e **Google Calendar API**, configura la schermata consenso OAuth e crea un client di tipo **Web application**.
 
-URI di reindirizzamento autorizzato:
+URI di reindirizzamento autorizzati (servono entrambi: uno per il login, uno per collegare Gmail/Calendar):
 
 ```text
+https://IL-TUO-PROGETTO.vercel.app/api/auth/google/callback
 https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 ```
 
 ### 3. Primo accesso
 
-Apri l'indirizzo Vercel dal telefono, accedi scegliendo il tuo nome e la tua password, poi premi **Collega Google**. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
+Apri l'indirizzo Vercel dal telefono, premi **Accedi con Google** e scegli il tuo account (deve corrispondere a una delle email autorizzate), poi premi **Collega Google** per attivare la sincronizzazione. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
 
 ## Sviluppo
 

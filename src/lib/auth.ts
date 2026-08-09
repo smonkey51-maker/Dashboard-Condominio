@@ -1,17 +1,26 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export const SESSION_COOKIE = "euganeo_session";
 
-export type AppUser = { id: string; name: string; passwordEnvVar: string };
+export type AppUser = { id: string; name: string; emailEnvVar: string };
 
 export const APP_USERS: AppUser[] = [
-  { id: "nicolo", name: "Nicolò", passwordEnvVar: "APP_PASSWORD_NICOLO" },
-  { id: "jessica", name: "Jessica", passwordEnvVar: "APP_PASSWORD_JESSICA" },
+  { id: "nicolo", name: "Nicolò", emailEnvVar: "GOOGLE_LOGIN_EMAIL_NICOLO" },
+  { id: "jessica", name: "Jessica", emailEnvVar: "GOOGLE_LOGIN_EMAIL_JESSICA" },
 ];
 
 export function findUser(userId: string | undefined) {
   return APP_USERS.find((user) => user.id === userId);
+}
+
+export function findUserByEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  return APP_USERS.find((user) => {
+    const allowed = (process.env[user.emailEnvVar] || "").trim().toLowerCase();
+    return allowed.length > 0 && allowed === normalized;
+  });
 }
 
 function secret() {
@@ -46,11 +55,13 @@ export async function getSessionUser() {
   return verifySessionValue((await cookies()).get(SESSION_COOKIE)?.value);
 }
 
-export function safePasswordMatch(userId: string, candidate: string) {
-  const user = findUser(userId);
-  if (!user) return false;
-  const expected = process.env[user.passwordEnvVar] || "";
-  const a = Buffer.from(candidate);
-  const b = Buffer.from(expected);
-  return expected.length >= 16 && a.length === b.length && timingSafeEqual(a, b);
+export function attachSession(response: NextResponse, userId: string) {
+  response.cookies.set(SESSION_COOKIE, createSessionValue(userId), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return response;
 }
