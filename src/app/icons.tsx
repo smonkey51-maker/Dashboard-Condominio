@@ -61,3 +61,40 @@ export function IconBell({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconPin({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M12 21s7-7.3 7-12.2A7 7 0 1 0 5 8.8C5 13.7 12 21 12 21Z" />
+      <circle cx="12" cy="8.8" r="2.4" />
+    </svg>
+  );
+}
+
+export function IconMore({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconSettings({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3.7v2.4M12 17.9v2.4M4.6 6.7l1.7 1.7M17.7 15.6l1.7 1.7M3.7 12h2.4M17.9 12h2.4M4.6 17.3l1.7-1.7M17.7 8.4l1.7-1.7" />
+    </svg>
+  );
+}
+
+export function IconRefresh({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M4.5 12a7.5 7.5 0 0 1 12.7-5.4M19.5 12a7.5 7.5 0 0 1-12.7 5.4" />
+      <path d="M17.6 4.3v3.3h-3.3M6.4 19.7v-3.3h3.3" />
+    </svg>
+  );
+}
