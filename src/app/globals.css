@@ -563,6 +563,21 @@ footer { color: var(--m3-on-surface-variant); font-size: 11px; text-align: cente
   .bento-grid { grid-template-columns: 1fr; }
 }
 
+.offline-indicator {
+  position: fixed;
+  top: calc(14px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
 .rv {
   opacity: 0;
   transform: translateY(46px) scale(0.9);

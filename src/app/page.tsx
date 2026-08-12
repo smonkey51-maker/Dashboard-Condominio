@@ -6,6 +6,7 @@ import { IconBell, IconClose, IconCoin, IconFile, IconHome, IconPin, IconRefresh
 import CopyButton from "./CopyButton";
 import RowMenu from "./RowMenu";
 import ExpandableList from "./ExpandableList";
+import OfflineIndicator from "./OfflineIndicator";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
 
   return (
     <main className="app-shell">
+      <OfflineIndicator items={items} />
       <aside className="sidebar">
         <a className="brand" href="#top"><span className="brand-mark">E</span><span>Euganeo Casa</span></a>
         <nav>
