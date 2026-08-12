@@ -3,8 +3,7 @@ import { Roboto } from "next/font/google";
 import "./globals.css";
 import RevealController from "./RevealController";
 import NavSpy from "./NavSpy";
-
-const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
+import MobileTabController from "./MobileTabController";
 
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
 
@@ -24,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <RevealController />
         <NavSpy />
+        <MobileTabController />
       </body>
     </html>
   );
