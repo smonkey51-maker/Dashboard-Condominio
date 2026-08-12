@@ -90,6 +90,14 @@ export function IconSettings({ className }: IconProps) {
   );
 }
 
+export function IconClose({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
 export function IconRefresh({ className }: IconProps) {
   return (
     <svg {...base} className={className} aria-hidden="true">

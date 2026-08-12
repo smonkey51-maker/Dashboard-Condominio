@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { dashboardData, type SyncedItem } from "@/lib/db";
-import { IconBell, IconCoin, IconFile, IconHome, IconLink, IconPin, IconRefresh, IconSettings, IconUsers } from "./icons";
+import { IconBell, IconClose, IconCoin, IconFile, IconHome, IconPin, IconRefresh, IconSettings, IconUsers } from "./icons";
 import CopyButton from "./CopyButton";
 import RowMenu from "./RowMenu";
 import ExpandableList from "./ExpandableList";
@@ -39,28 +39,16 @@ function formatIban(iban: string) {
   return iban.replace(/\s+/g, "").match(/.{1,4}/g)?.join(" ") ?? iban;
 }
 
-function dayStrip(meetings: SyncedItem[]) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const weekdayFmt = new Intl.DateTimeFormat("it-IT", { weekday: "short" });
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - 2 + i);
-    return {
-      key: d.toDateString(),
-      day: d.getDate(),
-      weekday: weekdayFmt.format(d).replace(".", "").toUpperCase(),
-      isToday: d.getTime() === today.getTime(),
-      hasMeeting: meetings.some((m) => new Date(m.occurred_at).toDateString() === d.toDateString()),
-    };
-  });
-}
-
 function sortedWithNowDivider(meetings: SyncedItem[]) {
   const sorted = [...meetings].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
   const nowIso = new Date().toISOString();
   const dividerIndex = sorted.findIndex((m) => m.occurred_at >= nowIso);
   return { sorted, dividerIndex };
+}
+
+const IMPORTANT_DOC_PATTERN = /verbale|convocazione|bilancio|regolamento|delibera/i;
+function isImportantDoc(item: SyncedItem) {
+  return IMPORTANT_DOC_PATTERN.test(item.title);
 }
 
 const labels: Record<string, string> = {
@@ -71,18 +59,23 @@ const labels: Record<string, string> = {
   update: "Aggiornamento",
 };
 
-function Item({ item, spotlight }: { item: SyncedItem; spotlight?: boolean }) {
+function Item({ item, spotlight, important }: { item: SyncedItem; spotlight?: boolean; important?: boolean }) {
+  const highlight = spotlight || important;
   const content = (
     <>
       <span className={`source-icon ${item.kind}`}>{item.source === "gmail" ? "M" : "C"}</span>
       <span className="item-copy"><strong>{item.title}</strong><small>{item.sender || item.location || labels[item.kind]}</small></span>
-      <span className="item-date">{date(item.occurred_at)}{item.unread ? <em>Nuovo</em> : null}</span>
+      <span className="item-date">
+        {date(item.occurred_at)}
+        {important ? <em className="important">Importante</em> : null}
+        {item.unread ? <em>Nuovo</em> : null}
+      </span>
     </>
   );
   const row = item.source_url ? (
-    <a className={`item-row${spotlight ? " spotlight" : ""}`} href={item.source_url} target="_blank" rel="noreferrer">{content}</a>
+    <a className={`item-row${highlight ? " spotlight" : ""}`} href={item.source_url} target="_blank" rel="noreferrer">{content}</a>
   ) : (
-    <div className={`item-row${spotlight ? " spotlight" : ""}`}>{content}</div>
+    <div className={`item-row${highlight ? " spotlight" : ""}`}>{content}</div>
   );
   return (
     <div className="item-row-shell">
@@ -125,6 +118,10 @@ function PaymentItem({ item }: { item: SyncedItem }) {
     </>
   );
   return item.source_url ? <a className="payment-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="payment-row">{content}</div>;
+}
+
+function OverlayClose() {
+  return <a className="overlay-close" href="#top" aria-label="Chiudi"><IconClose /></a>;
 }
 
 const notices: Record<string, { tone: "success" | "error"; text: string }> = {
@@ -193,75 +190,82 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         </header>
         <div className="page-wrap">
           {notice && <div className={`notice ${notice.tone}`}>{notice.text}</div>}
-          <section className="intro rv" id="panoramica">
-            <div><p className="eyebrow">DASHBOARD PRIVATA</p><h1>La casa, sotto controllo.</h1><p>Pagamenti, assemblee e documenti del Condominio Euganeo, in un unico posto.</p></div>
-            <span className="privacy-pill">● Solo famiglia</span>
+
+          <section className="hero-tile rv" id="panoramica">
+            <p className="eyebrow">DASHBOARD PRIVATA</p>
+            <h1>La casa, sotto controllo.</h1>
+            <p>Pagamenti, assemblee e documenti del Condominio Euganeo, in un unico posto.</p>
+            <span className="privacy-pill"><span className="privacy-dot" />Solo famiglia</span>
           </section>
 
-          <section className="metrics">
-            <a className="metric primary rv" href="#pagamenti"><span className="icon-badge"><IconCoin /></span><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></a>
-            <a className="metric rv" href="#assemblee"><span className="icon-badge"><IconUsers /></span><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></a>
-            <a className="metric rv" href="#aggiornamenti"><span className="icon-badge"><IconBell /></span><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></a>
-          </section>
-
-          {!connected ? (
-            <section className="connect-card rv">
-              <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2><span className="icon-badge"><IconLink /></span>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà una volta al giorno.</p></div>
-              <a className="button" href="/api/google/connect">Collega Google ↗</a>
-            </section>
-          ) : (
-            <section className="connect-card connected rv">
-              <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2><span className="icon-badge"><IconLink /></span>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente una volta al giorno. Puoi anche aggiornare adesso.</p></div>
-              <form action="/api/sync" method="post"><button className="button">Aggiorna ora ↻</button></form>
-            </section>
-          )}
-
-          <div className="grid-two">
-            <section className="panel rv" id="pagamenti">
-              <div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>
-              <p className="payment-iban">Bonifico su <code>{formatIban(CONDOMINIO_IBAN)}</code><CopyButton className="iban-copy" text={CONDOMINIO_IBAN} label="Copia IBAN" /></p>
-              {payments.length ? <div className="item-list"><ExpandableList initial={6}>{payments.map((item) => <PaymentItem key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun pagamento rilevato.</div>}
-            </section>
-            <section className="panel rv" id="assemblee">
-              <div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>
-              {meetings.length ? (
-                <>
-                  <div className="day-strip">
-                    {dayStrip(meetings).map((d) => (
-                      <div key={d.key} className={`day-cell${d.isToday ? " today" : ""}`}>
-                        <span className="day-num">{d.day}</span>
-                        <span className="day-name">{d.weekday}</span>
-                        {d.hasMeeting && <span className="day-dot" />}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="item-list">
-                    {meetingsAgenda.slice(0, 6).map((item, i) => (
-                      <Fragment key={`${item.source}-${item.external_id}`}>
-                        {i === dividerIndex && dividerIndex > 0 && <div className="now-divider"><span>Adesso</span></div>}
-                        <MeetingItem item={item} />
-                      </Fragment>
-                    ))}
-                  </div>
-                </>
-              ) : <div className="empty small">Nessuna assemblea rilevata.</div>}
-            </section>
+          <div className="bento-grid">
+            <a className="bento-tile primary rv" href="#pagamenti">
+              <span className="icon-badge"><IconCoin /></span>
+              <span className="bento-count">{payments.length}</span>
+              <span className="bento-copy"><strong>Pagamenti</strong><p>Scadenze dalle comunicazioni Gmail</p></span>
+            </a>
+            <a className="bento-tile rv" href="#assemblee">
+              <span className="icon-badge"><IconUsers /></span>
+              <span className="bento-count">{meetings.length}</span>
+              <span className="bento-copy"><strong>Assemblee</strong><p>Email ed eventi Calendar</p></span>
+            </a>
+            <a className="bento-tile rv" href="#documenti">
+              <span className="icon-badge"><IconFile /></span>
+              <span className="bento-count">{documents.length}</span>
+              <span className="bento-copy"><strong>Documenti</strong><p>Allegati e circolari</p></span>
+            </a>
+            <a className="bento-tile rv" href="#aggiornamenti">
+              <span className="icon-badge"><IconBell /></span>
+              {unread > 0 ? <span className="bento-badge">{unread > 9 ? "9+" : unread}</span> : <span className="bento-count">{items.length}</span>}
+              <span className="bento-copy"><strong>Aggiornamenti</strong><p>{unread > 0 ? `${unread} da leggere` : "Tutto letto"}</p></span>
+            </a>
           </div>
 
-          <section className="panel rv" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list"><ExpandableList initial={8}>{documents.map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
+          <p className="area-label rv">AREA PERSONALE</p>
+          <div className="bento-grid personal" id="impostazioni">
+            <div className="bento-tile plain rv">
+              <span className="bento-copy"><strong>{connected ? "Gmail e Calendar collegati" : "Collega Gmail e Calendar"}</strong><p>{connected ? "Il server controlla automaticamente una volta al giorno." : "Autorizza una volta l’account Google, in sola lettura."}</p></span>
+              {connected ? (
+                <form action="/api/sync" method="post"><button className="button ghost small" type="submit">Aggiorna ora ↻</button></form>
+              ) : (
+                <a className="button small" href="/api/google/connect">Collega Google ↗</a>
+              )}
+            </div>
+            <div className="bento-tile plain rv">
+              <span className="icon-badge"><IconSettings /></span>
+              <span className="bento-copy"><strong>{sessionUser.name}</strong><p>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</p></span>
+              <form action="/api/logout" method="post"><button className="button ghost small" type="submit">Esci</button></form>
+            </div>
+          </div>
 
-          <section className="panel rv" id="aggiornamenti">
-            <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2><span className="icon-badge"><IconBell /></span>Aggiornamenti</h2></div><span>{items.length} elementi</span></div>
-            {items.length ? <div className="item-list"><ExpandableList initial={5}>{items.map((item, i) => <Item key={`${item.source}-${item.external_id}`} item={item} spotlight={i === 0 && Boolean(item.unread)} />)}</ExpandableList></div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
+          <section className="panel section-overlay" id="pagamenti">
+            <div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span><OverlayClose /></div>
+            <p className="payment-iban">Bonifico su <code>{formatIban(CONDOMINIO_IBAN)}</code><CopyButton className="iban-copy" text={CONDOMINIO_IBAN} label="Copia IBAN" /></p>
+            {payments.length ? <div className="item-list"><ExpandableList initial={6}>{payments.map((item) => <PaymentItem key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun pagamento rilevato.</div>}
           </section>
 
-          <section className="panel account-panel mobile-only rv" id="impostazioni">
-            <div className="panel-head"><div><p className="eyebrow">ACCOUNT</p><h2><span className="icon-badge"><IconSettings /></span>Impostazioni</h2></div></div>
-            <div className="account-rows">
-              <div className="sync-status"><span className={connected ? "dot live" : "dot"} /><div><strong>{connected ? "Google collegato" : "Google da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
-              <div className="sync-status"><span className="dot live" /><div><strong>{sessionUser.name}</strong><small>Utente collegato</small></div></div>
-            </div>
-            <form action="/api/logout" method="post"><button className="button ghost" type="submit">Esci</button></form>
+          <section className="panel section-overlay" id="assemblee">
+            <div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span><OverlayClose /></div>
+            {meetings.length ? (
+              <div className="item-list">
+                {meetingsAgenda.map((item, i) => (
+                  <Fragment key={`${item.source}-${item.external_id}`}>
+                    {i === dividerIndex && dividerIndex > 0 && <div className="now-divider"><span>Adesso</span></div>}
+                    <MeetingItem item={item} />
+                  </Fragment>
+                ))}
+              </div>
+            ) : <div className="empty small">Nessuna assemblea rilevata.</div>}
+          </section>
+
+          <section className="panel section-overlay" id="documenti">
+            <div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span><OverlayClose /></div>
+            {documents.length ? <div className="item-list"><ExpandableList initial={8}>{documents.map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} important={isImportantDoc(item)} />)}</ExpandableList></div> : <div className="empty small">Nessun documento rilevato.</div>}
+          </section>
+
+          <section className="panel section-overlay" id="aggiornamenti">
+            <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2><span className="icon-badge"><IconBell /></span>Aggiornamenti</h2></div><span>{items.length} elementi</span><OverlayClose /></div>
+            {items.length ? <div className="item-list"><ExpandableList initial={12}>{items.map((item, i) => <Item key={`${item.source}-${item.external_id}`} item={item} spotlight={i === 0 && Boolean(item.unread)} />)}</ExpandableList></div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
           </section>
 
           <footer>Le email complete e gli allegati non vengono copiati: la dashboard conserva solo oggetto, mittente, data, breve anteprima e collegamento originale.</footer>
