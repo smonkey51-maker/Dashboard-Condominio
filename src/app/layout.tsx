@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import RevealController from "./RevealController";
+
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
 
 export const metadata: Metadata = {
   title: "Euganeo Casa",
@@ -8,12 +11,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#030a06",
+  themeColor: "#12140f",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="it">
+    <html lang="it" className={roboto.variable}>
       <body>
         {children}
         <RevealController />
