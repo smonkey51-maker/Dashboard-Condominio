@@ -6,6 +6,7 @@ import { IconBell, IconCoin, IconFile, IconHome, IconLink, IconPin, IconRefresh,
 import CopyButton from "./CopyButton";
 import RowMenu from "./RowMenu";
 import ExpandableList from "./ExpandableList";
+import OfflineIndicator from "./OfflineIndicator";
 
 export const dynamic = "force-dynamic";
 
@@ -148,6 +149,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
 
   return (
     <main className="app-shell">
+      <OfflineIndicator items={items} />
       <aside className="sidebar">
         <a className="brand" href="#top"><span className="brand-mark">E</span><span>Euganeo Casa</span></a>
         <nav>
@@ -193,36 +195,36 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         </header>
         <div className="page-wrap">
           {notice && <div className={`notice ${notice.tone}`}>{notice.text}</div>}
-          <section className="intro rv" id="panoramica">
+          <section className="intro rv" id="panoramica" data-tab="panoramica">
             <div><p className="eyebrow">DASHBOARD PRIVATA</p><h1>La casa, sotto controllo.</h1><p>Pagamenti, assemblee e documenti del Condominio Euganeo, in un unico posto.</p></div>
             <span className="privacy-pill">● Solo famiglia</span>
           </section>
 
-          <section className="metrics">
+          <section className="metrics" data-tab="panoramica">
             <a className="metric primary rv" href="#pagamenti"><span className="icon-badge"><IconCoin /></span><span>Pagamenti rilevati</span><strong>{payments.length}</strong><small>Dalle comunicazioni Gmail</small></a>
             <a className="metric rv" href="#assemblee"><span className="icon-badge"><IconUsers /></span><span>Assemblee</span><strong>{meetings.length}</strong><small>Email ed eventi Calendar</small></a>
             <a className="metric rv" href="#aggiornamenti"><span className="icon-badge"><IconBell /></span><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></a>
           </section>
 
           {!connected ? (
-            <section className="connect-card rv">
+            <section className="connect-card rv" data-tab="panoramica">
               <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2><span className="icon-badge"><IconLink /></span>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà una volta al giorno.</p></div>
               <a className="button" href="/api/google/connect">Collega Google ↗</a>
             </section>
           ) : (
-            <section className="connect-card connected rv">
+            <section className="connect-card connected rv" data-tab="panoramica">
               <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2><span className="icon-badge"><IconLink /></span>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente una volta al giorno. Puoi anche aggiornare adesso.</p></div>
               <form action="/api/sync" method="post"><button className="button">Aggiorna ora ↻</button></form>
             </section>
           )}
 
           <div className="grid-two">
-            <section className="panel rv" id="pagamenti">
+            <section className="panel rv" id="pagamenti" data-tab="pagamenti">
               <div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>
               <p className="payment-iban">Bonifico su <code>{formatIban(CONDOMINIO_IBAN)}</code><CopyButton className="iban-copy" text={CONDOMINIO_IBAN} label="Copia IBAN" /></p>
               {payments.length ? <div className="item-list"><ExpandableList initial={6}>{payments.map((item) => <PaymentItem key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun pagamento rilevato.</div>}
             </section>
-            <section className="panel rv" id="assemblee">
+            <section className="panel rv" id="assemblee" data-tab="assemblee">
               <div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>
               {meetings.length ? (
                 <>
@@ -248,14 +250,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
             </section>
           </div>
 
-          <section className="panel rv" id="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list"><ExpandableList initial={8}>{documents.map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
+          <section className="panel rv" id="documenti" data-tab="documenti"><div className="panel-head"><div><p className="eyebrow">ALLEGATI</p><h2><span className="icon-badge"><IconFile /></span>Documenti</h2></div><span>{documents.length}</span></div>{documents.length ? <div className="item-list"><ExpandableList initial={8}>{documents.map((item) => <Item key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun documento rilevato.</div>}</section>
 
-          <section className="panel rv" id="aggiornamenti">
+          <section className="panel rv" id="aggiornamenti" data-tab="aggiornamenti">
             <div className="panel-head"><div><p className="eyebrow">ULTIME ATTIVITÀ</p><h2><span className="icon-badge"><IconBell /></span>Aggiornamenti</h2></div><span>{items.length} elementi</span></div>
             {items.length ? <div className="item-list"><ExpandableList initial={5}>{items.map((item, i) => <Item key={`${item.source}-${item.external_id}`} item={item} spotlight={i === 0 && Boolean(item.unread)} />)}</ExpandableList></div> : <div className="empty"><strong>Nessun dato salvato</strong><p>Dopo il collegamento, qui appariranno soltanto i messaggi e gli eventi relativi a Euganeo.</p></div>}
           </section>
 
-          <section className="panel account-panel mobile-only rv" id="impostazioni">
+          <section className="panel account-panel mobile-only rv" id="impostazioni" data-tab="impostazioni">
             <div className="panel-head"><div><p className="eyebrow">ACCOUNT</p><h2><span className="icon-badge"><IconSettings /></span>Impostazioni</h2></div></div>
             <div className="account-rows">
               <div className="sync-status"><span className={connected ? "dot live" : "dot"} /><div><strong>{connected ? "Google collegato" : "Google da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
