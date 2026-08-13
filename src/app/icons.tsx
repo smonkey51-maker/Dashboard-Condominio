@@ -98,6 +98,23 @@ export function IconClose({ className }: IconProps) {
   );
 }
 
+export function IconSun({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 3.5v2.3M12 18.2v2.3M4.8 12H7M17 12h2.2M6.5 6.5l1.6 1.6M15.9 15.9l1.6 1.6M17.5 6.5l-1.6 1.6M8.1 15.9l-1.6 1.6" />
+    </svg>
+  );
+}
+
+export function IconMoon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M19.5 14.3A7.8 7.8 0 0 1 9.7 4.5a8 8 0 1 0 9.8 9.8Z" />
+    </svg>
+  );
+}
+
 export function IconRefresh({ className }: IconProps) {
   return (
     <svg {...base} className={className} aria-hidden="true">

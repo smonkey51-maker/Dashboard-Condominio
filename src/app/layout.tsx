@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import RevealController from "./RevealController";
 import NavSpy from "./NavSpy";
@@ -13,13 +14,24 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f3d38",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f1e6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f3d38" },
+  ],
 };
+
+const THEME_BOOT_SCRIPT = `
+  try {
+    var t = localStorage.getItem("euganeo-theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="it" className={roboto.variable}>
+    <html lang="it" className={roboto.variable} suppressHydrationWarning>
       <body>
+        <Script id="theme-boot" strategy="beforeInteractive">{THEME_BOOT_SCRIPT}</Script>
         {children}
         <RevealController />
         <NavSpy />

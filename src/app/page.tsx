@@ -7,6 +7,7 @@ import CopyButton from "./CopyButton";
 import RowMenu from "./RowMenu";
 import ExpandableList from "./ExpandableList";
 import OfflineIndicator from "./OfflineIndicator";
+import ThemeToggle from "./ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -237,6 +238,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
               <span className="icon-badge"><IconSettings /></span>
               <span className="bento-copy"><strong>{sessionUser.name}</strong><p>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</p></span>
               <form action="/api/logout" method="post"><button className="button ghost small" type="submit">Esci</button></form>
+            </div>
+            <div className="bento-tile plain rv">
+              <span className="bento-copy"><strong>Aspetto</strong><p>Tema chiaro o scuro</p></span>
+              <ThemeToggle />
             </div>
           </div>
 
