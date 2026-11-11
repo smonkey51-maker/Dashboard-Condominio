@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import RevealController from "./RevealController";
 import NavSpy from "./NavSpy";
 import MobileTabController from "./MobileTabController";
 import RegisterServiceWorker from "./register-sw";
@@ -37,7 +36,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="it" className={roboto.variable}>
       <body>
         {children}
-        <RevealController />
         <NavSpy />
         <MobileTabController />
         <RegisterServiceWorker />
