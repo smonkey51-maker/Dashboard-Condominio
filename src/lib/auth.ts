@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -27,6 +27,31 @@ function secret() {
   const value = process.env.SESSION_SECRET;
   if (!value || value.length < 32) throw new Error("SESSION_SECRET must contain at least 32 characters");
   return value;
+}
+
+const LOGIN_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+// Self-verifying (HMAC-signed) CSRF state for the Google login redirect, instead of a
+// cookie round-tripped through Google's domain: some mobile browsers (notably Safari's
+// Intelligent Tracking Prevention) drop cookies set just before a cross-site redirect,
+// which made the cookie-based state check fail unpredictably.
+export function createLoginState() {
+  const payload = `${Date.now().toString(36)}.${randomBytes(16).toString("hex")}`;
+  const signature = createHmac("sha256", secret()).update(payload).digest("hex");
+  return `${payload}.${signature}`;
+}
+
+export function verifyLoginState(state: string | null | undefined) {
+  if (!state) return false;
+  const parts = state.split(".");
+  if (parts.length !== 3) return false;
+  const [timestamp, nonce, signature] = parts;
+  const expected = createHmac("sha256", secret()).update(`${timestamp}.${nonce}`).digest("hex");
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+  const issuedAt = parseInt(timestamp, 36);
+  return Number.isFinite(issuedAt) && Date.now() - issuedAt < LOGIN_STATE_MAX_AGE_MS;
 }
 
 export function createSessionValue(userId: string) {
