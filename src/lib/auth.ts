@@ -29,29 +29,40 @@ function secret() {
   return value;
 }
 
-const LOGIN_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+const SIGNED_STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
-// Self-verifying (HMAC-signed) CSRF state for the Google login redirect, instead of a
+// Self-verifying (HMAC-signed) CSRF state for Google OAuth redirects, instead of a
 // cookie round-tripped through Google's domain: some mobile browsers (notably Safari's
 // Intelligent Tracking Prevention) drop cookies set just before a cross-site redirect,
-// which made the cookie-based state check fail unpredictably.
+// which made cookie-based state checks fail unpredictably. The payload (e.g. which
+// Google flow this is for) travels inside the signed state itself, so no cookie is
+// needed at all.
+export function createSignedState(payload = "") {
+  const body = `${Date.now().toString(36)}.${randomBytes(16).toString("hex")}.${payload}`;
+  const signature = createHmac("sha256", secret()).update(body).digest("hex");
+  return `${body}.${signature}`;
+}
+
+export function verifySignedState(state: string | null | undefined): string | null {
+  if (!state) return null;
+  const parts = state.split(".");
+  if (parts.length !== 4) return null;
+  const [timestamp, nonce, payload, signature] = parts;
+  const expected = createHmac("sha256", secret()).update(`${timestamp}.${nonce}.${payload}`).digest("hex");
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  const issuedAt = parseInt(timestamp, 36);
+  if (!Number.isFinite(issuedAt) || Date.now() - issuedAt >= SIGNED_STATE_MAX_AGE_MS) return null;
+  return payload;
+}
+
 export function createLoginState() {
-  const payload = `${Date.now().toString(36)}.${randomBytes(16).toString("hex")}`;
-  const signature = createHmac("sha256", secret()).update(payload).digest("hex");
-  return `${payload}.${signature}`;
+  return createSignedState();
 }
 
 export function verifyLoginState(state: string | null | undefined) {
-  if (!state) return false;
-  const parts = state.split(".");
-  if (parts.length !== 3) return false;
-  const [timestamp, nonce, signature] = parts;
-  const expected = createHmac("sha256", secret()).update(`${timestamp}.${nonce}`).digest("hex");
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
-  const issuedAt = parseInt(timestamp, 36);
-  return Number.isFinite(issuedAt) && Date.now() - issuedAt < LOGIN_STATE_MAX_AGE_MS;
+  return verifySignedState(state) !== null;
 }
 
 export function createSessionValue(userId: string) {

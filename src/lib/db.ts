@@ -25,8 +25,9 @@ export type SyncRun = {
   status: "success" | "error";
 };
 
-type AppState = {
-  googleRefreshToken?: string;
+export type AppState = {
+  gmailRefreshToken?: string;
+  calendarRefreshToken?: string;
   items: SyncedItem[];
   lastRun?: SyncRun;
 };
@@ -65,6 +66,7 @@ export async function dashboardData() {
   return {
     items: [...state.items].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).slice(0, 100),
     lastRun: state.lastRun,
-    connected: Boolean(state.googleRefreshToken),
+    connectedGmail: Boolean(state.gmailRefreshToken),
+    connectedCalendar: Boolean(state.calendarRefreshToken),
   };
 }

@@ -129,8 +129,9 @@ function PaymentItem({ item }: { item: SyncedItem }) {
 }
 
 const notices: Record<string, { tone: "success" | "error"; text: string }> = {
-  "google:connected": { tone: "success", text: "Google collegato. Premi \"Aggiorna ora\" per la prima sincronizzazione." },
-  "google:error": { tone: "error", text: "Non è stato possibile collegare Google. Riprova." },
+  "google:connected-gmail": { tone: "success", text: "Gmail collegato. Premi \"Aggiorna ora\" per la prima sincronizzazione." },
+  "google:connected-calendar": { tone: "success", text: "Calendar collegato. Premi \"Aggiorna ora\" per la prima sincronizzazione." },
+  "google:error": { tone: "error", text: "Non è stato possibile collegare l'account Google. Riprova." },
   "sync:ok": { tone: "success", text: "Sincronizzazione completata." },
   "sync:error": { tone: "error", text: "Sincronizzazione non riuscita. Riprova più tardi." },
 };
@@ -140,7 +141,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
   if (!sessionUser) redirect("/login");
   const { google, sync } = await searchParams;
   const notice = notices[`google:${google}`] || notices[`sync:${sync}`];
-  const { items, lastRun, connected } = await dashboardData();
+  const { items, lastRun, connectedGmail, connectedCalendar } = await dashboardData();
+  const connected = connectedGmail || connectedCalendar;
   const payments = items.filter((item) => item.kind === "payment");
   const meetings = items.filter((item) => item.kind === "assembly");
   const documents = items.filter((item) => item.kind === "document" || item.attachment_count > 0);
@@ -161,7 +163,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
           ))}
         </nav>
         <div className="sidebar-foot">
-          <div className="sync-status"><span className={connected ? "dot live" : "dot"} /><div><strong>{connected ? "Google collegato" : "Google da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
+          <div className="sync-status"><span className={connectedGmail ? "dot live" : "dot"} /><div><strong>{connectedGmail ? "Gmail collegato" : "Gmail da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
+          <div className="sync-status"><span className={connectedCalendar ? "dot live" : "dot"} /><div><strong>{connectedCalendar ? "Calendar collegato" : "Calendar da collegare"}</strong><small>Sola lettura</small></div></div>
           <div className="sync-status"><span className="dot live" /><div><strong>{sessionUser.name}</strong><small>Utente collegato</small></div></div>
           <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
         </div>
@@ -206,14 +209,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
             <a className="metric" href="#aggiornamenti"><span className="icon-badge"><IconBell /></span><span>Da leggere</span><strong>{unread}</strong><small>Aggiornamenti non letti</small></a>
           </section>
 
-          {!connected ? (
+          {!connectedGmail && (
             <section className="connect-card" data-tab="panoramica">
-              <div><p className="eyebrow">UN SOLO COLLEGAMENTO</p><h2><span className="icon-badge"><IconLink /></span>Collega Gmail e Calendar</h2><p>Autorizza una volta l’account Google. La webapp userà esclusivamente permessi in sola lettura e si aggiornerà una volta al giorno.</p></div>
-              <a className="button" href="/api/google/connect">Collega Google ↗</a>
+              <div><p className="eyebrow">COLLEGAMENTO GMAIL</p><h2><span className="icon-badge"><IconCoin /></span>Collega Gmail</h2><p>Autorizza l’account Gmail dove arrivano le comunicazioni del condominio (sola lettura).</p></div>
+              <a className="button" href="/api/google/connect?target=gmail">Collega Gmail ↗</a>
             </section>
-          ) : (
+          )}
+          {!connectedCalendar && (
+            <section className="connect-card" data-tab="panoramica">
+              <div><p className="eyebrow">COLLEGAMENTO CALENDAR</p><h2><span className="icon-badge"><IconUsers /></span>Collega Calendar</h2><p>Autorizza l’account Google Calendar dove sono segnate le assemblee (sola lettura). Può essere un account diverso da quello di Gmail.</p></div>
+              <a className="button" href="/api/google/connect?target=calendar">Collega Calendar ↗</a>
+            </section>
+          )}
+          {connected && (
             <section className="connect-card connected" data-tab="panoramica">
-              <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2><span className="icon-badge"><IconLink /></span>Gmail e Calendar collegati</h2><p>Il server controlla automaticamente una volta al giorno. Puoi anche aggiornare adesso.</p></div>
+              <div><p className="eyebrow">SINCRONIZZAZIONE ATTIVA</p><h2><span className="icon-badge"><IconLink /></span>{connectedGmail && connectedCalendar ? "Gmail e Calendar collegati" : connectedGmail ? "Gmail collegato" : "Calendar collegato"}</h2><p>Il server controlla automaticamente una volta al giorno. Puoi anche aggiornare adesso.</p></div>
               <form action="/api/sync" method="post"><button className="button">Aggiorna ora ↻</button></form>
             </section>
           )}
@@ -260,7 +270,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
           <section className="panel account-panel mobile-only" id="impostazioni" data-tab="impostazioni">
             <div className="panel-head"><div><p className="eyebrow">ACCOUNT</p><h2><span className="icon-badge"><IconSettings /></span>Impostazioni</h2></div></div>
             <div className="account-rows">
-              <div className="sync-status"><span className={connected ? "dot live" : "dot"} /><div><strong>{connected ? "Google collegato" : "Google da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
+              <div className="sync-status"><span className={connectedGmail ? "dot live" : "dot"} /><div><strong>{connectedGmail ? "Gmail collegato" : "Gmail da collegare"}</strong><small>{lastRun ? `Aggiornato ${syncDate(lastRun.synced_at)}` : "Sola lettura"}</small></div></div>
+              <div className="sync-status"><span className={connectedCalendar ? "dot live" : "dot"} /><div><strong>{connectedCalendar ? "Calendar collegato" : "Calendar da collegare"}</strong><small>Sola lettura</small></div></div>
               <div className="sync-status"><span className="dot live" /><div><strong>{sessionUser.name}</strong><small>Utente collegato</small></div></div>
             </div>
             <form action="/api/logout" method="post"><button className="button ghost" type="submit">Esci</button></form>

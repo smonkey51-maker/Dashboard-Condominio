@@ -2,12 +2,16 @@ import { google } from "googleapis";
 import { loadState, saveState, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
 
-const scopes = [
-  "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/calendar.readonly",
-  "openid",
-  "email",
-];
+export type GoogleTarget = "gmail" | "calendar";
+
+const scopesByTarget: Record<GoogleTarget, string[]> = {
+  gmail: ["https://www.googleapis.com/auth/gmail.readonly"],
+  calendar: ["https://www.googleapis.com/auth/calendar.readonly"],
+};
+
+export function isGoogleTarget(value: string | null): value is GoogleTarget {
+  return value === "gmail" || value === "calendar";
+}
 
 function oauthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -18,17 +22,25 @@ function oauthClient() {
   return new google.auth.OAuth2(clientId, clientSecret, `${appUrl}/api/google/callback`);
 }
 
-export function googleAuthorizationUrl(state: string) {
-  return oauthClient().generateAuthUrl({ access_type: "offline", prompt: "consent", scope: scopes, state });
+export function googleAuthorizationUrl(target: GoogleTarget, state: string) {
+  return oauthClient().generateAuthUrl({ access_type: "offline", prompt: "consent", scope: scopesByTarget[target], state });
 }
 
-export async function saveGoogleAuthorization(code: string) {
+export async function saveGoogleAuthorization(target: GoogleTarget, code: string) {
   const client = oauthClient();
   const { tokens } = await client.getToken(code);
   if (!tokens.refresh_token) throw new Error("Google did not return a refresh token");
   const state = await loadState();
-  state.googleRefreshToken = encryptSecret(tokens.refresh_token);
+  if (target === "gmail") state.gmailRefreshToken = encryptSecret(tokens.refresh_token);
+  else state.calendarRefreshToken = encryptSecret(tokens.refresh_token);
   await saveState(state);
+}
+
+function clientFor(refreshToken: string | undefined) {
+  if (!refreshToken) return null;
+  const auth = oauthClient();
+  auth.setCredentials({ refresh_token: decryptSecret(refreshToken) });
+  return auth;
 }
 
 function attachmentCount(part: { filename?: string | null; parts?: unknown[] | null } | undefined): number {
@@ -70,15 +82,8 @@ function normalize(item: IncomingItem): SyncedItem {
   };
 }
 
-export async function syncGoogle() {
-  const state = await loadState();
-  if (!state.googleRefreshToken) throw new Error("Google account is not connected");
-
-  const auth = oauthClient();
-  auth.setCredentials({ refresh_token: decryptSecret(state.googleRefreshToken) });
+async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
   const gmail = google.gmail({ version: "v1", auth });
-  const calendar = google.calendar({ version: "v3", auth });
-  const now = new Date();
   const emailList = await gmail.users.messages.list({
     userId: "me",
     maxResults: 100,
@@ -106,7 +111,12 @@ export async function syncGoogle() {
       attachmentCount: attachments,
     });
   }));
+  return emails.filter((item): item is SyncedItem => Boolean(item));
+}
 
+async function fetchEvents(auth: ReturnType<typeof oauthClient>) {
+  const calendar = google.calendar({ version: "v3", auth });
+  const now = new Date();
   const calendarResponse = await calendar.events.list({
     calendarId: "primary",
     q: "Euganeo",
@@ -117,7 +127,7 @@ export async function syncGoogle() {
     maxResults: 250,
   });
 
-  const events = (calendarResponse.data.items || []).filter((event) => event.id && event.summary).map((event) => normalize({
+  return (calendarResponse.data.items || []).filter((event) => event.id && event.summary).map((event) => normalize({
     source: "calendar",
     externalId: event.id!,
     kind: /assemblea|riunione|convocazione/i.test(event.summary || "") ? "assembly" : "event",
@@ -131,9 +141,21 @@ export async function syncGoogle() {
     unread: 0,
     attachmentCount: 0,
   }));
+}
+
+export async function syncGoogle() {
+  const state = await loadState();
+  const gmailAuth = clientFor(state.gmailRefreshToken);
+  const calendarAuth = clientFor(state.calendarRefreshToken);
+  if (!gmailAuth && !calendarAuth) throw new Error("Nessun account Google collegato");
+
+  const [emails, events] = await Promise.all([
+    gmailAuth ? fetchEmails(gmailAuth) : Promise.resolve([]),
+    calendarAuth ? fetchEvents(calendarAuth) : Promise.resolve([]),
+  ]);
 
   const merged = new Map(state.items.map((item) => [`${item.source}:${item.external_id}`, item]));
-  for (const item of [...emails.filter((item): item is SyncedItem => Boolean(item)), ...events]) {
+  for (const item of [...emails, ...events]) {
     merged.set(`${item.source}:${item.external_id}`, item);
   }
   state.items = [...merged.values()]
@@ -141,10 +163,10 @@ export async function syncGoogle() {
     .slice(0, 300);
   state.lastRun = {
     synced_at: new Date().toISOString(),
-    email_count: emails.filter(Boolean).length,
+    email_count: emails.length,
     event_count: events.length,
     status: "success",
   };
   await saveState(state);
-  return { emails: emails.filter(Boolean).length, events: events.length };
+  return { emails: emails.length, events: events.length };
 }
