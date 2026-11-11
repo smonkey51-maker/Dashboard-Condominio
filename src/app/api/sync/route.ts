@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     return NextResponse.json({ ok: true, ...(await syncGoogle()) });
   } catch (error) {
+    console.error("Cron sync failed", error);
     const message = error instanceof Error ? error.message : "Sync failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     await syncGoogle();
     return NextResponse.redirect(new URL("/?sync=ok", request.url), 303);
   } catch (error) {
+    console.error("Manual sync failed", error);
     return NextResponse.redirect(new URL("/?sync=error", request.url), 303);
   }
 }
