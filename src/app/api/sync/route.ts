@@ -21,11 +21,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!(await isAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const wantsJson = request.nextUrl.searchParams.get("json") === "1";
   try {
-    await syncGoogle();
+    const result = await syncGoogle();
+    if (wantsJson) return NextResponse.json({ ok: true, ...result });
     return NextResponse.redirect(new URL("/?sync=ok", request.url), 303);
   } catch (error) {
     console.error("Manual sync failed", error);
+    if (wantsJson) return NextResponse.json({ ok: false }, { status: 500 });
     return NextResponse.redirect(new URL("/?sync=error", request.url), 303);
   }
 }
