@@ -6,6 +6,7 @@ Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e 
 
 - È pubblicata su Vercel: non servono PC acceso, Docker o server domestici.
 - Un Cron Job richiama la sincronizzazione una volta al giorno.
+- Dalla casella Gmail vengono lette solo le email con le etichette `CONDOMINIO EUGANEO` e `CONDOMINIO_ELABORATO`.
 - Gmail e Google Calendar sono usati esclusivamente in sola lettura.
 - La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.

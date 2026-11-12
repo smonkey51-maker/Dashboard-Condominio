@@ -94,16 +94,39 @@ function normalize(item: IncomingItem): SyncedItem {
   };
 }
 
+const CONDOMINIO_LABELS = ["condominio euganeo", "condominio_elaborato"];
+const MAX_EMAILS = 300;
+
+async function listEmailIds(gmail: ReturnType<typeof google.gmail>) {
+  const { data } = await gmail.users.labels.list({ userId: "me" });
+  const labelIds = (data.labels || [])
+    .filter((label) => label.id && CONDOMINIO_LABELS.includes((label.name || "").trim().toLowerCase()))
+    .map((label) => label.id!);
+
+  const ids = new Set<string>();
+  if (!labelIds.length) {
+    // Labels not found (renamed?): fall back to a text search so the sync never goes empty.
+    console.warn("Gmail labels for the condominio not found, using text search");
+    const fallback = await gmail.users.messages.list({ userId: "me", maxResults: 100, q: 'in:anywhere ("Condominio Euganeo" OR Euganeo) -in:spam -in:trash' });
+    (fallback.data.messages || []).forEach((m) => m.id && ids.add(m.id));
+    return [...ids];
+  }
+  for (const labelId of labelIds) {
+    let pageToken: string | undefined;
+    do {
+      const page = await gmail.users.messages.list({ userId: "me", labelIds: [labelId], maxResults: 100, pageToken });
+      (page.data.messages || []).forEach((m) => m.id && ids.add(m.id));
+      pageToken = ids.size < MAX_EMAILS ? page.data.nextPageToken || undefined : undefined;
+    } while (pageToken);
+  }
+  return [...ids].slice(0, MAX_EMAILS);
+}
+
 async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
   const gmail = google.gmail({ version: "v1", auth });
-  const emailList = await gmail.users.messages.list({
-    userId: "me",
-    maxResults: 100,
-    q: 'in:anywhere ("Condominio Euganeo" OR Euganeo) -in:spam -in:trash',
-  });
+  const messageIds = await listEmailIds(gmail);
 
-  const emails = await Promise.all((emailList.data.messages || []).map(async ({ id }) => {
-    if (!id) return null;
+  const fetchOne = async (id: string) => {
     const response = await gmail.users.messages.get({ userId: "me", id, format: "full" });
     const message = response.data;
     const headers = Object.fromEntries((message.payload?.headers || []).map((header) => [header.name?.toLowerCase(), header.value || ""]));
@@ -122,8 +145,14 @@ async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
       unread: message.labelIds?.includes("UNREAD") ? 1 : 0,
       attachmentCount: attachments,
     });
-  }));
-  return emails.filter((item): item is SyncedItem => Boolean(item));
+  };
+
+  // Chunked to stay under Gmail's per-user concurrency limits.
+  const emails: SyncedItem[] = [];
+  for (let i = 0; i < messageIds.length; i += 20) {
+    emails.push(...(await Promise.all(messageIds.slice(i, i + 20).map(fetchOne))));
+  }
+  return emails;
 }
 
 async function fetchEvents(auth: ReturnType<typeof oauthClient>) {
