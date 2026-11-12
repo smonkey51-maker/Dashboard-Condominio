@@ -12,6 +12,8 @@ export const longDate = (d: Date | string) => fmt({ day: "numeric", month: "long
 export const shortDate = (d: Date | string) => fmt({ day: "numeric", month: "short", year: "numeric" }).format(new Date(d));
 export const timeOf = (d: Date | string) => fmt({ hour: "2-digit", minute: "2-digit" }).format(new Date(d));
 
+export const todayLabel = () => fmt({ weekday: "long", day: "numeric", month: "long" }).format(new Date());
+
 export function syncLabel(iso: string) {
   const d = new Date(iso);
   const day = (x: Date) => fmt({ year: "numeric", month: "numeric", day: "numeric" }).format(x);
