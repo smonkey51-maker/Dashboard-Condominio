@@ -12,8 +12,7 @@ import SyncButton from "../SyncButton";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!(await getSessionUser())) redirect("/login");
   const { items, lastRun, connected } = await loadDashboard();
   const problem = lastRun?.status === "error" ? lastRun : null;
 
@@ -21,22 +20,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="app-shell">
       <OfflineIndicator items={items} />
       {connected && <Suspense><AutoSync lastSyncedAt={lastRun?.synced_at} /></Suspense>}
-      <aside className="sidebar">
-        <Link className="brand" href="/"><span className="brand-mark">E</span><span>Euganeo Casa</span></Link>
-        <NavLinks variant="side" />
-        <div className="sidebar-foot">
-          <span>{user.name}</span>
-          <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
-        </div>
-      </aside>
       <NavLinks variant="pill" />
 
       <div className="content">
         <header className="topbar">
-          <strong className="mobile-logo">Euganeo Casa</strong>
+          <Link className="brand" href="/">Euganeo Casa</Link>
+          <NavLinks variant="top" />
           <div className="topbar-actions">
             {connected && <SyncButton label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={Boolean(problem)} />}
-            <form action="/api/logout" method="post" className="mobile-only"><button className="link-button">Esci</button></form>
+            <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
           </div>
         </header>
         <main className="page">
@@ -56,7 +48,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </section>
           )}
           {children}
-          <footer>La dashboard conserva solo oggetto, mittente, data, breve anteprima e collegamento originale delle email.</footer>
         </main>
       </div>
     </div>

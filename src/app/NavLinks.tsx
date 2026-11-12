@@ -12,10 +12,10 @@ const items = [
   { href: "/comunicazioni", label: "Comunicazioni", Icon: IconBell },
 ];
 
-export default function NavLinks({ variant }: { variant: "side" | "pill" }) {
+export default function NavLinks({ variant }: { variant: "top" | "pill" }) {
   const pathname = usePathname();
   return (
-    <nav className={variant === "side" ? "side-nav" : "pill-nav"} aria-label="Navigazione principale">
+    <nav className={variant === "top" ? "top-nav" : "pill-nav"} aria-label="Navigazione principale">
       {items.map(({ href, label, Icon }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
