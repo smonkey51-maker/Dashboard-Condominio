@@ -9,6 +9,7 @@ export default async function Assemblee() {
   return (
     <>
       <h1>Assemblee</h1>
+      <p className="subtitle">{[next.length ? `${next.length} in programma` : "Nessuna in programma", history.length ? `${history.length} nello storico` : ""].filter(Boolean).join(" · ")}</p>
       <section className="block">
         <div className="block-head"><h2>In programma</h2></div>
         {next.length ? <div className="rows">{next.map((m) => <MeetingRow key={m.item.external_id} m={m} />)}</div> : <p className="empty">Nessuna assemblea in programma.</p>}

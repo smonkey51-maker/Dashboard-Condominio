@@ -17,7 +17,7 @@ export default async function Home() {
   return (
     <div className="home">
       <div className="hero-grid">
-        <Link href="/pagamenti" className={`hero${nextPayment?.rata ? " alert" : ""}`}>
+        <Link href="/pagamenti" className={`hero lead${nextPayment?.rata ? " alert" : ""}`}>
           <p className="eyebrow">Prossima scadenza</p>
           {nextPayment ? (
             <>
@@ -28,7 +28,7 @@ export default async function Home() {
           ) : <p className="hero-empty">Nessuna scadenza in arrivo</p>}
         </Link>
 
-        <div className="hero">
+        <div className="hero side">
           <p className="eyebrow">Prossima assemblea</p>
           {nextMeeting ? (
             <>
@@ -46,12 +46,12 @@ export default async function Home() {
       </div>
 
       <section className="block">
-        <div className="block-head"><h2>Comunicazioni importanti</h2><Link href="/comunicazioni">Tutte</Link></div>
+        <div className="block-head"><h2>Comunicazioni importanti</h2><Link href="/comunicazioni">Tutte →</Link></div>
         {important.length ? <div className="rows">{important.map((c) => <CommunicationRow key={c.item.external_id} c={c} />)}</div> : <p className="empty">Niente di importante negli ultimi mesi.</p>}
       </section>
 
       <section className="block">
-        <div className="block-head"><h2>Documenti recenti</h2><Link href="/documenti">Tutti</Link></div>
+        <div className="block-head"><h2>Documenti recenti</h2><Link href="/documenti">Tutti →</Link></div>
         {documents.length ? <div className="rows">{documents.map((d) => <DocumentRow key={d.item.external_id} d={d} />)}</div> : <p className="empty">Nessun documento.</p>}
       </section>
     </div>
