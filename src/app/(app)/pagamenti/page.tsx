@@ -10,6 +10,7 @@ export default async function Pagamenti() {
   return (
     <>
       <h1>Pagamenti</h1>
+      <p className="subtitle">{[upcoming.length ? `${upcoming.length} in arrivo` : "Nessuna scadenza in arrivo", past.length ? `${past.length} scadut${past.length === 1 ? "o" : "i"}` : ""].filter(Boolean).join(" · ")}</p>
       <p className="iban">Bonifico su <code>{formatIban(CONDOMINIO_IBAN)}</code><CopyButton className="copy" text={CONDOMINIO_IBAN} label="Copia IBAN" /></p>
       <section className="block">
         <div className="block-head"><h2>In arrivo</h2></div>

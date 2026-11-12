@@ -23,14 +23,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <NavLinks variant="pill" />
 
       <div className="content">
-        <header className="topbar">
+        <div className="chrome"><header className="topbar">
           <Link className="brand" href="/">Euganeo Casa</Link>
           <NavLinks variant="top" />
           <div className="topbar-actions">
             {connected && <SyncButton label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={Boolean(problem)} />}
             <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
           </div>
-        </header>
+        </header></div>
         <main className="page">
           <Suspense><Notices /></Suspense>
           {problem && (

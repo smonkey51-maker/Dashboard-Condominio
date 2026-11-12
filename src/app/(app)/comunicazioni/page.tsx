@@ -7,6 +7,7 @@ export default async function Comunicazioni() {
   return (
     <>
       <h1>Comunicazioni</h1>
+      <p className="subtitle">{list.length} comunicazion{list.length === 1 ? "e" : "i"}</p>
       <section className="block">
         {list.length ? <div className="rows">{list.map((c) => <CommunicationRow key={c.item.external_id} c={c} />)}</div> : <p className="empty">Nessuna comunicazione.</p>}
       </section>
