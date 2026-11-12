@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Roboto } from "next/font/google";
+import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
 import RegisterServiceWorker from "./register-sw";
 
-const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const serif = Newsreader({ subsets: ["latin"], variable: "--font-serif", style: ["normal"] });
 
 export const metadata: Metadata = {
   title: "Euganeo Casa",
@@ -31,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="it" className={roboto.variable}>
+    <html lang="it" className={`${sans.variable} ${serif.variable}`}>
       <body>
         {children}
         <RegisterServiceWorker />

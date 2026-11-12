@@ -25,11 +25,11 @@ export function MeetingRow({ m }: { m: Meeting }) {
       <span className="row-main">
         <span className="row-title">{m.title}</span>
         <span className="row-meta">
-          {longDate(m.when)}{m.hasTime ? ` · ore ${timeOf(m.when)}` : ""}
-          {m.item.location && <> · <IconPin className="pin" />{m.item.location}</>}
+          {m.hasTime ? `Ore ${timeOf(m.when)}` : m.item.source === "calendar" ? "Calendar" : "Email"}
+          {m.item.location && <> · <IconPin className="pin" /> {m.item.location}</>}
         </span>
       </span>
-      <span className="row-side">{m.item.source === "calendar" ? "Calendar" : "Email"}</span>
+      <span className="row-side">{longDate(m.when)}</span>
     </Row>
   );
 }
@@ -39,9 +39,9 @@ export function DocumentRow({ d }: { d: DocEntry }) {
     <Row href={d.item.source_url}>
       <span className="row-main">
         <span className="row-title">{d.title}</span>
-        <span className="row-meta">{shortDate(d.item.occurred_at)} · {d.type}</span>
+        <span className="row-meta">{d.type}</span>
       </span>
-      <span className="row-side file">{d.badge}</span>
+      <span className="row-side">{shortDate(d.item.occurred_at)}</span>
     </Row>
   );
 }
@@ -51,8 +51,9 @@ export function CommunicationRow({ c }: { c: Communication }) {
     <Row href={c.item.source_url}>
       <span className="row-main">
         <span className="row-title">{c.item.unread ? <i className="unread" aria-label="Da leggere" /> : null}{c.title}</span>
-        <span className="row-meta">{shortDate(c.item.occurred_at)} · {c.type}</span>
+        <span className="row-meta">{c.type}</span>
       </span>
+      <span className="row-side">{shortDate(c.item.occurred_at)}</span>
     </Row>
   );
 }

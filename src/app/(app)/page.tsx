@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
-import { documentsOf, importantOf, loadDashboard, longDate, mapsUrl, meetingsOf, paymentsOf, pastMeetings, shortDate, timeOf, upcomingMeetings } from "@/lib/view";
+import { documentsOf, importantOf, loadDashboard, longDate, mapsUrl, meetingsOf, paymentsOf, pastMeetings, shortDate, timeOf, todayLabel, upcomingMeetings } from "@/lib/view";
 import { CommunicationRow, DocumentRow } from "../Rows";
 import { IconPin } from "../icons";
 
@@ -18,6 +18,7 @@ export default async function Home() {
 
   return (
     <div className="home">
+      <p className="date-line">{todayLabel()}</p>
       <h1 className="greeting">Ciao{user ? `, ${user.name}` : ""}</h1>
 
       <div className="hero-grid">
@@ -49,12 +50,12 @@ export default async function Home() {
         </div>
       </div>
 
-      <section className="block compact">
+      <section className="block">
         <div className="block-head"><h2>Comunicazioni importanti</h2><Link href="/comunicazioni">Tutte</Link></div>
         {important.length ? <div className="rows">{important.map((c) => <CommunicationRow key={c.item.external_id} c={c} />)}</div> : <p className="empty">Niente di importante negli ultimi mesi.</p>}
       </section>
 
-      <section className="block compact">
+      <section className="block">
         <div className="block-head"><h2>Documenti recenti</h2><Link href="/documenti">Tutti</Link></div>
         {documents.length ? <div className="rows">{documents.map((d) => <DocumentRow key={d.item.external_id} d={d} />)}</div> : <p className="empty">Nessun documento.</p>}
       </section>
