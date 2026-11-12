@@ -1,36 +1,37 @@
 :root {
-  --m3-primary: #a8c398;
-  --m3-on-primary: #10190d;
-  --m3-primary-container: #2b3a26;
-  --m3-on-primary-container: #cfe3c0;
-  --m3-secondary: #b7c2ac;
-  --m3-on-secondary: #1a2016;
-  --m3-secondary-container: #333a2d;
-  --m3-on-secondary-container: #d3ddc8;
-  --m3-tertiary: #d2b989;
-  --m3-on-tertiary: #251d0b;
-  --m3-tertiary-container: #473a1e;
-  --m3-on-tertiary-container: #ecdcb8;
-  --m3-error: #ffb4ab;
-  --m3-on-error: #690005;
-  --m3-error-container: #93000a;
-  --m3-on-error-container: #ffdad6;
-  --m3-background: #0a0a09;
-  --m3-on-background: #efece4;
-  --m3-surface: #0a0a09;
-  --m3-on-surface: #efece4;
-  --m3-on-surface-variant: #a6a89d;
-  --m3-outline: #52544a;
-  --m3-outline-variant: #292b24;
-  --m3-surface-container-lowest: #000000;
-  --m3-surface-container-low: #131310;
-  --m3-surface-container: #18180f;
-  --m3-surface-container-high: #1f1f16;
-  --m3-surface-container-highest: #27271c;
-  --m3-shadow: 0, 0, 0;
-  --elevation-1: 0 1px 2px rgba(var(--m3-shadow), 0.5), 0 1px 3px rgba(var(--m3-shadow), 0.4);
-  --elevation-2: 0 1px 2px rgba(var(--m3-shadow), 0.5), 0 4px 10px rgba(var(--m3-shadow), 0.45);
-  --elevation-3: 0 1px 3px rgba(var(--m3-shadow), 0.55), 0 14px 34px rgba(var(--m3-shadow), 0.5);
+  /* Sage + off-white, with red accents */
+  --m3-primary: #5f7a58;
+  --m3-on-primary: #fbf9f4;
+  --m3-primary-container: #dde6d3;
+  --m3-on-primary-container: #2c3d27;
+  --m3-secondary: #7f9276;
+  --m3-on-secondary: #fbf9f4;
+  --m3-secondary-container: #e6ebdd;
+  --m3-on-secondary-container: #333f2d;
+  --m3-tertiary: #b3261e;
+  --m3-on-tertiary: #fbf9f4;
+  --m3-tertiary-container: #f6dad6;
+  --m3-on-tertiary-container: #5c1410;
+  --m3-error: #b3261e;
+  --m3-on-error: #fbf9f4;
+  --m3-error-container: #f6dad6;
+  --m3-on-error-container: #5c1410;
+  --m3-background: #f5f2ea;
+  --m3-on-background: #232820;
+  --m3-surface: #f5f2ea;
+  --m3-on-surface: #232820;
+  --m3-on-surface-variant: #646a58;
+  --m3-outline: #aeb3a0;
+  --m3-outline-variant: #dad9ca;
+  --m3-surface-container-lowest: #fdfcf8;
+  --m3-surface-container-low: #faf8f2;
+  --m3-surface-container: #f0eee4;
+  --m3-surface-container-high: #e8e6da;
+  --m3-surface-container-highest: #e0ded1;
+  --m3-shadow: 50, 60, 40;
+  --elevation-1: 0 1px 2px rgba(var(--m3-shadow), 0.10), 0 1px 3px rgba(var(--m3-shadow), 0.08);
+  --elevation-2: 0 1px 2px rgba(var(--m3-shadow), 0.10), 0 4px 10px rgba(var(--m3-shadow), 0.10);
+  --elevation-3: 0 1px 3px rgba(var(--m3-shadow), 0.12), 0 14px 34px rgba(var(--m3-shadow), 0.14);
 }
 
 * { box-sizing: border-box; }
@@ -110,7 +111,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .sync-status strong { color: var(--m3-on-surface); font-size: 13px; font-weight: 500; }
 .sync-status small { color: var(--m3-on-surface-variant); font-size: 11px; margin-top: 2px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--m3-outline-variant); flex-shrink: 0; }
-.dot.live { background: var(--m3-primary); box-shadow: 0 0 0 5px rgba(168, 195, 152, 0.16); }
+.dot.live { background: var(--m3-primary); box-shadow: 0 0 0 5px rgba(95, 122, 88, 0.18); }
 .link-button { border: 0; background: transparent; color: var(--m3-on-surface-variant); padding: 0; cursor: pointer; font-size: 13px; transition: color 0.15s ease; }
 .link-button:hover { color: var(--m3-on-surface); }
 
@@ -286,8 +287,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   flex-shrink: 0;
 }
 .metric .icon-badge { color: var(--m3-primary); margin-bottom: 12px; }
-.metric.primary .icon-badge { background: rgba(255, 255, 255, 0.10); color: var(--m3-on-primary-container); }
-.connect-card.connected .icon-badge { background: rgba(255, 255, 255, 0.08); color: var(--m3-on-secondary-container); }
+.metric.primary .icon-badge { background: rgba(95, 122, 88, 0.14); color: var(--m3-on-primary-container); }
+.connect-card.connected .icon-badge { background: rgba(95, 122, 88, 0.12); color: var(--m3-on-secondary-container); }
 .connect-card p:last-child { margin: 0; color: var(--m3-on-surface-variant); max-width: 620px; }
 
 .button {
@@ -340,7 +341,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .item-row.spotlight:hover { filter: brightness(1.05); }
 .item-row.spotlight .item-copy small { color: var(--m3-on-primary-container); opacity: 0.75; }
 .source-icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--m3-tertiary-container); color: var(--m3-on-tertiary-container); font-weight: 700; flex-shrink: 0; }
-.item-row.spotlight .source-icon { background: rgba(255, 255, 255, 0.10); color: var(--m3-on-primary-container); }
+.item-row.spotlight .source-icon { background: rgba(95, 122, 88, 0.14); color: var(--m3-on-primary-container); }
 .source-icon.payment { background: var(--m3-secondary-container); color: var(--m3-on-secondary-container); }
 .source-icon.assembly { background: var(--m3-tertiary-container); color: var(--m3-on-tertiary-container); }
 .source-icon.document { background: var(--m3-surface-container-high); color: var(--m3-on-surface-variant); }
@@ -348,7 +349,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .item-copy strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 500; color: var(--m3-on-surface); }
 .item-copy small { color: var(--m3-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
 .item-date { font-size: 11px; color: var(--m3-on-surface-variant); display: grid; justify-items: end; gap: 5px; }
-.item-date em { font-style: normal; color: var(--m3-on-primary-container); background: var(--m3-primary-container); padding: 3px 8px; border-radius: 999px; font-weight: 700; }
+.item-date em { font-style: normal; color: var(--m3-on-tertiary-container); background: var(--m3-tertiary-container); padding: 3px 8px; border-radius: 999px; font-weight: 700; }
 
 .row-menu { position: relative; flex-shrink: 0; }
 .row-menu-trigger {

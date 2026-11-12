@@ -19,7 +19,7 @@ Importa questo repository in Vercel, crea un **Blob Store privato** collegato al
 
 ```text
 APP_URL=https://IL-TUO-PROGETTO.vercel.app
-GOOGLE_LOGIN_EMAIL_NICOLO=email-google-di-nicolo@gmail.com
+GOOGLE_LOGIN_EMAIL_NICOLO=nic.forcolin@gmail.com
 GOOGLE_LOGIN_EMAIL_JESSICA=email-google-di-jessica@gmail.com
 SESSION_SECRET=almeno-32-caratteri-casuali
 CRON_SECRET=un-altro-segreto-lungo
@@ -41,9 +41,13 @@ https://IL-TUO-PROGETTO.vercel.app/api/auth/google/callback
 https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 ```
 
+**Importante:** nella schermata consenso OAuth porta lo stato da **Testing** a **In produzione**. In modalità Testing Google fa scadere il refresh token dopo 7 giorni e la sincronizzazione si ferma in silenzio (è la causa più comune di una dashboard "ferma"). Se compare l'avviso "autorizzazione scaduta", premi **Ricollega Google**.
+
+L'account da usare è uno solo (`nic.forcolin@gmail.com`): serve sia per entrare sia per leggere Gmail e Calendar.
+
 ### 3. Primo accesso
 
-Apri l'indirizzo Vercel dal telefono, premi **Accedi con Google** e scegli il tuo account (deve corrispondere a una delle email autorizzate), poi premi **Collega Google** per attivare la sincronizzazione. Da quel momento la sincronizzazione è automatica una volta al giorno; resta disponibile anche il pulsante **Aggiorna ora**.
+Apri l'indirizzo Vercel dal telefono, premi **Accedi con Google** e scegli il tuo account (deve corrispondere a una delle email autorizzate), poi premi **Collega Google** (un solo consenso per Gmail e Calendar) per attivare la sincronizzazione. Da quel momento la sincronizzazione è automatica una volta al giorno e a ogni apertura della dashboard se gli ultimi dati hanno più di 3 ore; resta disponibile anche il pulsante **Aggiorna ora**.
 
 ## Sviluppo
 

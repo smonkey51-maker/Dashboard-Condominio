@@ -23,9 +23,14 @@ export type SyncRun = {
   email_count: number;
   event_count: number;
   status: "success" | "error";
+  error?: string;
+  needs_reconnect?: boolean;
 };
 
 export type AppState = {
+  // One Google account (Gmail + Calendar). The two legacy fields are still read
+  // so a connection made with the previous per-service flow keeps working.
+  googleRefreshToken?: string;
   gmailRefreshToken?: string;
   calendarRefreshToken?: string;
   items: SyncedItem[];
@@ -66,7 +71,6 @@ export async function dashboardData() {
   return {
     items: [...state.items].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).slice(0, 100),
     lastRun: state.lastRun,
-    connectedGmail: Boolean(state.gmailRefreshToken),
-    connectedCalendar: Boolean(state.calendarRefreshToken),
+    connected: Boolean(state.googleRefreshToken || state.gmailRefreshToken || state.calendarRefreshToken),
   };
 }

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Dashboard privata del Condominio Euganeo",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0a09",
-    theme_color: "#0a0a09",
+    background_color: "#f5f2ea",
+    theme_color: "#f5f2ea",
     lang: "it",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

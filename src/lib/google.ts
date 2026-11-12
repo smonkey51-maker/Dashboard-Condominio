@@ -2,16 +2,10 @@ import { google } from "googleapis";
 import { loadState, saveState, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
 
-export type GoogleTarget = "gmail" | "calendar";
-
-const scopesByTarget: Record<GoogleTarget, string[]> = {
-  gmail: ["https://www.googleapis.com/auth/gmail.readonly"],
-  calendar: ["https://www.googleapis.com/auth/calendar.readonly"],
-};
-
-export function isGoogleTarget(value: string | null): value is GoogleTarget {
-  return value === "gmail" || value === "calendar";
-}
+const googleScopes = [
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/calendar.readonly",
+];
 
 function oauthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -22,17 +16,30 @@ function oauthClient() {
   return new google.auth.OAuth2(clientId, clientSecret, `${appUrl}/api/google/callback`);
 }
 
-export function googleAuthorizationUrl(target: GoogleTarget, state: string) {
-  return oauthClient().generateAuthUrl({ access_type: "offline", prompt: "consent", scope: scopesByTarget[target], state });
+export function googleAuthorizationUrl(state: string) {
+  const loginHint = process.env.GOOGLE_LOGIN_EMAIL_NICOLO?.trim();
+  return oauthClient().generateAuthUrl({
+    access_type: "offline",
+    prompt: "consent",
+    scope: googleScopes,
+    include_granted_scopes: true,
+    login_hint: loginHint || undefined,
+    state,
+  });
 }
 
-export async function saveGoogleAuthorization(target: GoogleTarget, code: string) {
+export async function saveGoogleAuthorization(code: string) {
   const client = oauthClient();
   const { tokens } = await client.getToken(code);
   if (!tokens.refresh_token) throw new Error("Google did not return a refresh token");
+  const granted = (tokens.scope || "").split(" ");
+  const missing = googleScopes.filter((scope) => !granted.includes(scope));
+  if (missing.length) throw new Error(`Permessi Google mancanti: ${missing.join(", ")}`);
   const state = await loadState();
-  if (target === "gmail") state.gmailRefreshToken = encryptSecret(tokens.refresh_token);
-  else state.calendarRefreshToken = encryptSecret(tokens.refresh_token);
+  state.googleRefreshToken = encryptSecret(tokens.refresh_token);
+  delete state.gmailRefreshToken;
+  delete state.calendarRefreshToken;
+  state.lastRun = undefined;
   await saveState(state);
 }
 
@@ -41,6 +48,11 @@ function clientFor(refreshToken: string | undefined) {
   const auth = oauthClient();
   auth.setCredentials({ refresh_token: decryptSecret(refreshToken) });
   return auth;
+}
+
+function isRevoked(error: unknown) {
+  const text = error instanceof Error ? error.message : String(error);
+  return /invalid_grant|invalid_rapt|unauthorized_client|Token has been expired or revoked/i.test(text);
 }
 
 function attachmentCount(part: { filename?: string | null; parts?: unknown[] | null } | undefined): number {
@@ -145,28 +157,48 @@ async function fetchEvents(auth: ReturnType<typeof oauthClient>) {
 
 export async function syncGoogle() {
   const state = await loadState();
-  const gmailAuth = clientFor(state.gmailRefreshToken);
-  const calendarAuth = clientFor(state.calendarRefreshToken);
-  if (!gmailAuth && !calendarAuth) throw new Error("Nessun account Google collegato");
+  const legacy = state.gmailRefreshToken || state.calendarRefreshToken;
+  const token = state.googleRefreshToken || legacy;
+  const auth = clientFor(token);
+  if (!auth) throw new Error("Nessun account Google collegato");
+  // A legacy single-service token only covers one service: don't query the other.
+  const useGmail = Boolean(state.googleRefreshToken || state.gmailRefreshToken);
+  const useCalendar = Boolean(state.googleRefreshToken || (!state.gmailRefreshToken && state.calendarRefreshToken));
 
-  const [emails, events] = await Promise.all([
-    gmailAuth ? fetchEmails(gmailAuth) : Promise.resolve([]),
-    calendarAuth ? fetchEvents(calendarAuth) : Promise.resolve([]),
+  const [gmailResult, calendarResult] = await Promise.allSettled([
+    useGmail ? fetchEmails(auth) : Promise.resolve([] as SyncedItem[]),
+    useCalendar ? fetchEvents(auth) : Promise.resolve([] as SyncedItem[]),
   ]);
+  const failures = [gmailResult, calendarResult].filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  const emails = gmailResult.status === "fulfilled" ? gmailResult.value : [];
+  const events = calendarResult.status === "fulfilled" ? calendarResult.value : [];
+
+  if (failures.length) {
+    failures.forEach((f) => console.error("Google sync partial failure", f.reason));
+    // Keep whatever succeeded, and record the failure so the UI can show it.
+    const reconnect = failures.some((f) => isRevoked(f.reason));
+    const reason = failures[0].reason;
+    state.lastRun = {
+      synced_at: new Date().toISOString(),
+      email_count: emails.length,
+      event_count: events.length,
+      status: "error",
+      error: reconnect ? "Autorizzazione Google scaduta o revocata" : reason instanceof Error ? reason.message : "Errore sconosciuto",
+      needs_reconnect: reconnect,
+    };
+  }
 
   const merged = new Map(state.items.map((item) => [`${item.source}:${item.external_id}`, item]));
-  for (const item of [...emails, ...events]) {
-    merged.set(`${item.source}:${item.external_id}`, item);
-  }
+  for (const item of [...emails, ...events]) merged.set(`${item.source}:${item.external_id}`, item);
   state.items = [...merged.values()]
     .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
     .slice(0, 300);
-  state.lastRun = {
-    synced_at: new Date().toISOString(),
-    email_count: emails.length,
-    event_count: events.length,
-    status: "success",
-  };
+  if (!failures.length) {
+    state.lastRun = { synced_at: new Date().toISOString(), email_count: emails.length, event_count: events.length, status: "success" };
+  }
   await saveState(state);
-  return { emails: emails.length, events: events.length };
+  if (failures.length === 2 || (failures.length && !emails.length && !events.length)) {
+    throw new Error(state.lastRun!.error);
+  }
+  return { emails: emails.length, events: events.length, partial: failures.length > 0 };
 }
