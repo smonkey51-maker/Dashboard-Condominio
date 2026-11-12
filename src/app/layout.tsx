@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import NavSpy from "./NavSpy";
-import MobileTabController from "./MobileTabController";
 import RegisterServiceWorker from "./register-sw";
 
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
@@ -36,8 +34,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="it" className={roboto.variable}>
       <body>
         {children}
-        <NavSpy />
-        <MobileTabController />
         <RegisterServiceWorker />
       </body>
     </html>

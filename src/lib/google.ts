@@ -61,6 +61,14 @@ function attachmentCount(part: { filename?: string | null; parts?: unknown[] | n
   return (part.filename ? 1 : 0) + children.reduce((sum, child) => sum + attachmentCount(child), 0);
 }
 
+function attachmentTypes(part: { filename?: string | null; parts?: unknown[] | null } | undefined, found = new Set<string>()): string[] {
+  if (!part) return [...found];
+  const ext = part.filename?.split(".").pop()?.toLowerCase();
+  if (part.filename && ext && ext.length <= 5 && ext !== part.filename.toLowerCase()) found.add(ext);
+  for (const child of (part.parts || []) as Array<{ filename?: string | null; parts?: unknown[] | null }>) attachmentTypes(child, found);
+  return [...found];
+}
+
 function classify(subject: string, attachments: number) {
   const text = subject.toLowerCase();
   if (/assemblea|convocazione|verbale/.test(text)) return "assembly";
@@ -69,12 +77,13 @@ function classify(subject: string, attachments: number) {
   return "update";
 }
 
-type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count"> & {
+type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count" | "file_types"> & {
   externalId: string;
   occurredAt: string;
   endsAt: string | null;
   sourceUrl: string | null;
   attachmentCount: number;
+  fileTypes?: string[];
 };
 
 function normalize(item: IncomingItem): SyncedItem {
@@ -91,6 +100,7 @@ function normalize(item: IncomingItem): SyncedItem {
     source_url: item.sourceUrl,
     unread: item.unread,
     attachment_count: item.attachmentCount,
+    file_types: item.fileTypes,
   };
 }
 
@@ -144,6 +154,7 @@ async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
       sourceUrl: `https://mail.google.com/mail/#all/${id}`,
       unread: message.labelIds?.includes("UNREAD") ? 1 : 0,
       attachmentCount: attachments,
+      fileTypes: attachmentTypes(message.payload || undefined),
     });
   };
 

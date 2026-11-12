@@ -16,6 +16,7 @@ export type SyncedItem = {
   source_url: string | null;
   unread: number;
   attachment_count: number;
+  file_types?: string[];
 };
 
 export type SyncRun = {
