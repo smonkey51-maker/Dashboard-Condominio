@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { dashboardData, type SyncedItem } from "./db";
 import { extractDueDate, isRata } from "./deadlines";
+import { classify } from "./classify";
 
 export const loadDashboard = cache(dashboardData);
 
@@ -59,10 +60,13 @@ const kindLabels: Record<string, string> = {
 
 // ---------- view models ----------
 
+const kindOf = (item: SyncedItem) => (item.source === "gmail" ? classify(item.title, item.attachment_count) : item.kind);
+
+
 export type Payment = { item: SyncedItem; title: string; amount: string | null; due: Date | null; past: boolean; rata: boolean };
 
 export function paymentsOf(items: SyncedItem[]): Payment[] {
-  const all = items.filter((i) => i.kind === "payment").map((item) => {
+  const all = items.filter((i) => kindOf(i) === "payment").map((item) => {
     const text = `${item.title} ${item.summary || ""}`;
     const due = extractDueDate(text, item.occurred_at);
     const rata = isRata(text);
@@ -79,7 +83,7 @@ export type Meeting = { item: SyncedItem; title: string; when: Date; hasTime: bo
 export function meetingsOf(items: SyncedItem[]): Meeting[] {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const all = items.filter((i) => i.kind === "assembly").map((item) => {
+  const all = items.filter((i) => kindOf(i) === "assembly").map((item) => {
     const text = `${item.title} ${item.summary || ""}`;
     let when = new Date(item.occurred_at);
     let hasTime = item.source === "calendar" && item.occurred_at.includes("T");
@@ -103,7 +107,7 @@ export type DocEntry = { item: SyncedItem; title: string; type: string; badge: s
 
 export function documentsOf(items: SyncedItem[]): DocEntry[] {
   return items
-    .filter((i) => i.kind === "document" || i.attachment_count > 0)
+    .filter((i) => kindOf(i) === "document" || i.attachment_count > 0)
     .map((item) => ({ item, title: cleanTitle(item.title), type: fileTypeOf(item), badge: (item.file_types?.[0] || "file").toUpperCase() }))
     .sort((a, b) => b.item.occurred_at.localeCompare(a.item.occurred_at));
 }
@@ -111,10 +115,31 @@ export function documentsOf(items: SyncedItem[]): DocEntry[] {
 export type Communication = { item: SyncedItem; title: string; type: string };
 
 export function communicationsOf(items: SyncedItem[]): Communication[] {
+  const seen = new Set<string>();
   return items
     .filter((i) => i.source === "gmail")
-    .map((item) => ({ item, title: cleanTitle(item.title), type: kindLabels[item.kind] || "Comunicazione" }))
-    .sort((a, b) => b.item.occurred_at.localeCompare(a.item.occurred_at));
+    .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
+    .map((item) => ({ item, title: cleanTitle(item.title), type: kindLabels[kindOf(item)] || "Comunicazione" }))
+    // Same subject on the same day (thread replies, forwards): keep one.
+    .filter((c) => {
+      const key = `${c.title.toLowerCase()}|${c.item.occurred_at.slice(0, 10)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+const IMPORTANT = /\b(urgent\w*|verbale|convocazione|assemblea|bilancio|preventivo|consuntivo|regolamento|delibera\w*|rata|rate|acconto|versamento|scadenza|sollecito|avviso|lavori|guasto|interruzione)\b/i;
+
+// What deserves a place on the home page: money, meetings, anything flagged
+// as important by its wording, or still unread — and recent.
+export function importantOf(items: SyncedItem[], days = 120): Communication[] {
+  const limit = Date.now() - days * 86400000;
+  return communicationsOf(items).filter((c) => {
+    if (new Date(c.item.occurred_at).getTime() < limit) return false;
+    const kind = kindOf(c.item);
+    return kind === "payment" || kind === "assembly" || IMPORTANT.test(c.item.title) || Boolean(c.item.unread);
+  });
 }
 
 export function mapsUrl(location: string) {
