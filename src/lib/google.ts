@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { loadState, saveState, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
+import { classify } from "./classify";
 
 const googleScopes = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -67,14 +68,6 @@ function attachmentTypes(part: { filename?: string | null; parts?: unknown[] | n
   if (part.filename && ext && ext.length <= 5 && ext !== part.filename.toLowerCase()) found.add(ext);
   for (const child of (part.parts || []) as Array<{ filename?: string | null; parts?: unknown[] | null }>) attachmentTypes(child, found);
   return [...found];
-}
-
-function classify(subject: string, attachments: number) {
-  const text = subject.toLowerCase();
-  if (/assemblea|convocazione|verbale/.test(text)) return "assembly";
-  if (/rata|pagamento|scadenza|saldo|bonifico/.test(text)) return "payment";
-  if (attachments > 0) return "document";
-  return "update";
 }
 
 type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count" | "file_types"> & {
