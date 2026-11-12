@@ -8,6 +8,7 @@ import RowMenu from "./RowMenu";
 import ExpandableList from "./ExpandableList";
 import OfflineIndicator from "./OfflineIndicator";
 import AutoSync from "./AutoSync";
+import { extractDueDate, isRata } from "@/lib/deadlines";
 
 export const dynamic = "force-dynamic";
 
@@ -119,14 +120,34 @@ function MeetingItem({ item }: { item: SyncedItem }) {
 
 const CONDOMINIO_IBAN = "IT10S0306912139100000010025";
 
-function PaymentItem({ item }: { item: SyncedItem }) {
+type Deadline = { item: SyncedItem; due: Date | null; past: boolean; rata: boolean };
+
+function withDeadline(item: SyncedItem): Deadline {
+  const text = `${item.title} ${item.summary || ""}`;
+  const due = extractDueDate(text, item.occurred_at);
+  // Without a recognisable due date, treat it as past once the email is a month old.
+  const past = due ? due.getTime() < Date.now() : Date.now() - new Date(item.occurred_at).getTime() > 30 * 86400000;
+  return { item, due, past, rata: isRata(text) };
+}
+
+// Upcoming first (soonest on top), then past ones (most recent first).
+function sortDeadlines(items: SyncedItem[]) {
+  const all = items.map(withDeadline);
+  const key = (d: Deadline) => (d.due ?? new Date(d.item.occurred_at)).getTime();
+  const upcoming = all.filter((d) => !d.past).sort((a, b) => key(a) - key(b));
+  const past = all.filter((d) => d.past).sort((a, b) => key(b) - key(a));
+  return [...upcoming, ...past];
+}
+
+function PaymentItem({ deadline: { item, due, past, rata } }: { deadline: Deadline }) {
   const content = (
     <>
-      <span className="payment-reason">{readableText(item)}</span>
-      <span className="payment-date">{date(item.occurred_at)}</span>
+      <span className="payment-reason">{rata && <em className="rata-tag">Rata</em>}{readableText(item)}</span>
+      <span className="payment-date">{due ? `Scade ${date(due.toISOString())}` : date(item.occurred_at)}</span>
     </>
   );
-  return item.source_url ? <a className="payment-row" href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className="payment-row">{content}</div>;
+  const className = `payment-row${past ? " past" : rata ? " rata" : ""}`;
+  return item.source_url ? <a className={className} href={item.source_url} target="_blank" rel="noreferrer">{content}</a> : <div className={className}>{content}</div>;
 }
 
 const notices: Record<string, { tone: "success" | "error"; text: string }> = {
@@ -235,7 +256,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
             <section className="panel" id="pagamenti" data-tab="pagamenti">
               <div className="panel-head"><div><p className="eyebrow">SCADENZE</p><h2><span className="icon-badge"><IconCoin /></span>Pagamenti</h2></div><span>{payments.length}</span></div>
               <p className="payment-iban">Bonifico su <code>{formatIban(CONDOMINIO_IBAN)}</code><CopyButton className="iban-copy" text={CONDOMINIO_IBAN} label="Copia IBAN" /></p>
-              {payments.length ? <div className="item-list"><ExpandableList initial={6}>{payments.map((item) => <PaymentItem key={`${item.source}-${item.external_id}`} item={item} />)}</ExpandableList></div> : <div className="empty small">Nessun pagamento rilevato.</div>}
+              {payments.length ? <div className="item-list"><ExpandableList initial={6}>{sortDeadlines(payments).map((d) => <PaymentItem key={`${d.item.source}-${d.item.external_id}`} deadline={d} />)}</ExpandableList></div> : <div className="empty small">Nessun pagamento rilevato.</div>}
             </section>
             <section className="panel" id="assemblee" data-tab="assemblee">
               <div className="panel-head"><div><p className="eyebrow">RIUNIONI</p><h2><span className="icon-badge"><IconUsers /></span>Assemblee</h2></div><span>{meetings.length}</span></div>

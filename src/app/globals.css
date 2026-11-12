@@ -471,6 +471,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .payment-row:hover { background: var(--m3-surface-container-high); }
 .payment-row:active { transform: scale(0.99); }
 .payment-row:last-child { border-bottom: 0; }
+.payment-row.past { opacity: 0.5; }
+.payment-row.past:hover { opacity: 0.85; }
+.payment-row.rata { background: var(--m3-tertiary-container); border-bottom-color: transparent; margin-bottom: 4px; }
+.payment-row.rata .payment-reason { color: var(--m3-on-tertiary-container); font-weight: 700; }
+.payment-row.rata .payment-date { color: var(--m3-tertiary); font-weight: 700; }
+.payment-row.rata:hover { background: var(--m3-tertiary-container); filter: brightness(0.97); }
+.rata-tag { font-style: normal; margin-right: 8px; padding: 2px 8px; border-radius: 999px; background: var(--m3-tertiary); color: var(--m3-on-tertiary); font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.payment-row.past .rata-tag { background: transparent; color: var(--m3-tertiary); border: 1px solid var(--m3-tertiary); }
 .payment-reason { min-width: 0; color: var(--m3-on-surface); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .payment-date { flex-shrink: 0; font-size: 12px; color: var(--m3-on-surface-variant); }
 
