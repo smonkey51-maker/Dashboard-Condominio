@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { getSessionUser } from "@/lib/auth";
-import { documentsOf, importantOf, loadDashboard, longDate, mapsUrl, meetingsOf, paymentsOf, pastMeetings, shortDate, timeOf, todayLabel, upcomingMeetings } from "@/lib/view";
+import { documentsOf, importantOf, loadDashboard, longDate, mapsUrl, meetingsOf, paymentsOf, pastMeetings, shortDate, timeOf, upcomingMeetings } from "@/lib/view";
 import { CommunicationRow, DocumentRow } from "../Rows";
 import { IconPin } from "../icons";
 
 export default async function Home() {
-  const user = await getSessionUser();
   const { items } = await loadDashboard();
   const upcomingPayments = paymentsOf(items).filter((p) => !p.past);
   // Prefer a deadline with a known amount: it is the actionable one.
@@ -18,9 +16,6 @@ export default async function Home() {
 
   return (
     <div className="home">
-      <p className="date-line">{todayLabel()}</p>
-      <h1 className="greeting">Ciao{user ? `, ${user.name}` : ""}</h1>
-
       <div className="hero-grid">
         <Link href="/pagamenti" className={`hero${nextPayment?.rata ? " alert" : ""}`}>
           <p className="eyebrow">Prossima scadenza</p>

@@ -39,7 +39,6 @@ export function DocumentRow({ d }: { d: DocEntry }) {
     <Row href={d.item.source_url}>
       <span className="row-main">
         <span className="row-title">{d.title}</span>
-        <span className="row-meta">{d.type}</span>
       </span>
       <span className="row-side">{shortDate(d.item.occurred_at)}</span>
     </Row>
@@ -51,7 +50,6 @@ export function CommunicationRow({ c }: { c: Communication }) {
     <Row href={c.item.source_url}>
       <span className="row-main">
         <span className="row-title">{c.item.unread ? <i className="unread" aria-label="Da leggere" /> : null}{c.title}</span>
-        <span className="row-meta">{c.type}</span>
       </span>
       <span className="row-side">{shortDate(c.item.occurred_at)}</span>
     </Row>
