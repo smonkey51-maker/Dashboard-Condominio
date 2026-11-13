@@ -98,3 +98,36 @@ export function IconRefresh({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconWrench({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M14.5 6.5a4 4 0 0 0 4.9 4.9l-8.8 8.8a2.1 2.1 0 0 1-3-3l8.8-8.8a4 4 0 0 0-1.9-1.9z" />
+    </svg>
+  );
+}
+
+export function IconChevron({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="m9.5 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+export function IconBack({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="m14.5 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+export function IconUser({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="12" cy="9" r="3.4" />
+      <path d="M5.5 19.5c.8-3.2 3.3-4.8 6.5-4.8s5.7 1.6 6.5 4.8" />
+    </svg>
+  );
+}

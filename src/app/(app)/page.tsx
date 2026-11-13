@@ -1,58 +1,69 @@
 import Link from "next/link";
-import { documentsOf, importantOf, loadDashboard, longDate, mapsUrl, meetingsOf, paymentsOf, pastMeetings, shortDate, timeOf, upcomingMeetings } from "@/lib/view";
-import { CommunicationRow, DocumentRow } from "../Rows";
-import { IconPin } from "../icons";
+import { IconChevron, IconCoin, IconUsers } from "../icons";
+import SyncButton from "../SyncButton";
+import { CommunicationRow } from "../Rows";
+import { communicationsOf, documentsOf, itemRef, loadDashboard, longDate, meetingsOf, nextActionOf, syncLabel, timeOf, upcomingMeetings } from "@/lib/view";
 
 export default async function Home() {
-  const { items } = await loadDashboard();
-  const upcomingPayments = paymentsOf(items).filter((p) => !p.past);
-  // Prefer a deadline with a known amount: it is the actionable one.
-  const nextPayment = upcomingPayments.find((p) => p.amount) ?? upcomingPayments[0];
-  const meetings = meetingsOf(items);
-  const nextMeeting = upcomingMeetings(meetings)[0];
-  const lastMeeting = pastMeetings(meetings)[0];
-  const important = importantOf(items).slice(0, 3);
-  const documents = documentsOf(items).slice(0, 2);
+  const { items, lastRun, connected } = await loadDashboard();
+  const action = nextActionOf(items);
+  const documents = documentsOf(items);
+  const comms = communicationsOf(items);
+  const upcoming = upcomingMeetings(meetingsOf(items));
 
   return (
     <div className="home">
-      <div className="hero-grid">
-        <Link href="/pagamenti" className={`hero lead${nextPayment?.rata ? " alert" : ""}`}>
-          <p className="eyebrow">Prossima scadenza</p>
-          {nextPayment ? (
-            <>
-              <p className="hero-big">{nextPayment.amount ?? nextPayment.title}</p>
-              <p className="hero-sub">{nextPayment.amount ? nextPayment.title : nextPayment.due ? "" : "Data non indicata"}</p>
-              {nextPayment.due && <p className="hero-date">Entro il {longDate(nextPayment.due)}</p>}
-            </>
-          ) : <p className="hero-empty">Nessuna scadenza in arrivo</p>}
+      <header className="home-head">
+        <h1>Euganeo Casa</h1>
+        <p className="home-sub">Condominio Euganeo</p>
+        {connected && <SyncButton className="home-update" prefix="Ultimo aggiornamento: " label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={lastRun?.status === "error"} />}
+      </header>
+
+      {action ? (
+        <Link href={`/dettaglio/${itemRef(action.kind === "payment" ? action.payment.item : action.meeting.item)}`} className="priority">
+          <span className="row-icon attention">{action.kind === "payment" ? <IconCoin /> : <IconUsers />}</span>
+          <span className="priority-main">
+            <span className="priority-label">{action.kind === "payment" ? "Prossima scadenza" : "Prossima assemblea"}</span>
+            {action.kind === "payment" ? (
+              <>
+                <span className="priority-title">{action.payment.title}</span>
+                <span className="priority-meta">
+                  Pagamento{action.payment.amount ? ` · Importo: ${action.payment.amount}` : ""}
+                </span>
+                <span className="priority-date">{action.payment.due ? `Scade il ${longDate(action.payment.due)}` : "Scadenza da verificare"}</span>
+              </>
+            ) : (
+              <>
+                <span className="priority-title">{action.meeting.title}</span>
+                <span className="priority-meta">Assemblea{action.meeting.item.location ? ` · ${action.meeting.item.location}` : ""}</span>
+                <span className="priority-date">{longDate(action.meeting.when)}{action.meeting.hasTime ? ` · ore ${timeOf(action.meeting.when)}` : ""}</span>
+              </>
+            )}
+          </span>
+          <span className={`chip ${action.kind === "payment" ? action.payment.status : "futura"}`}>
+            {action.kind === "payment" ? (action.payment.status === "da-verificare" ? "Da verificare" : "In arrivo") : "In programma"}
+          </span>
+          <IconChevron className="chev" />
         </Link>
-
-        <div className="hero side">
-          <p className="eyebrow">Prossima assemblea</p>
-          {nextMeeting ? (
-            <>
-              <p className="hero-big">{longDate(nextMeeting.when)}</p>
-              <p className="hero-sub">{nextMeeting.hasTime ? `Ore ${timeOf(nextMeeting.when)}` : nextMeeting.title}</p>
-              {nextMeeting.item.location && <a className="hero-date link" href={mapsUrl(nextMeeting.item.location)} target="_blank" rel="noreferrer"><IconPin className="pin" />{nextMeeting.item.location}</a>}
-            </>
-          ) : (
-            <>
-              <p className="hero-empty">Nessuna assemblea in programma</p>
-              {lastMeeting && <p className="hero-sub">Ultima: {shortDate(lastMeeting.when)}</p>}
-            </>
-          )}
+      ) : (
+        <div className="priority calm">
+          <span className="priority-main">
+            <span className="priority-label">Prossima azione</span>
+            <span className="priority-title">Nessuna azione in sospeso</span>
+            <span className="priority-meta">Quando arriva una scadenza o una convocazione la trovi qui.</span>
+          </span>
         </div>
-      </div>
+      )}
+
+      <nav className="tiles" aria-label="Riepilogo">
+        <Link href="/documenti" className="tile"><strong>{documents.length}</strong><span>Documenti</span></Link>
+        <Link href="/comunicazioni" className="tile"><strong>{comms.length}</strong><span>Comunicazioni</span></Link>
+        <Link href="/assemblee" className="tile"><strong>{upcoming.length}</strong><span>Assemblee in programma</span></Link>
+      </nav>
 
       <section className="block">
-        <div className="block-head"><h2>Comunicazioni importanti</h2><Link href="/comunicazioni">Tutte →</Link></div>
-        {important.length ? <div className="rows">{important.map((c) => <CommunicationRow key={c.item.external_id} c={c} />)}</div> : <p className="empty">Niente di importante negli ultimi mesi.</p>}
-      </section>
-
-      <section className="block">
-        <div className="block-head"><h2>Documenti recenti</h2><Link href="/documenti">Tutti →</Link></div>
-        {documents.length ? <div className="rows">{documents.map((d) => <DocumentRow key={d.item.external_id} d={d} />)}</div> : <p className="empty">Nessun documento.</p>}
+        <div className="block-head"><h2>Ultime comunicazioni</h2><Link href="/comunicazioni">Tutte →</Link></div>
+        {comms.length ? <div className="rows">{comms.slice(0, 3).map((c) => <CommunicationRow key={`${c.item.source}-${c.item.external_id}`} c={c} />)}</div> : <p className="empty">Nessuna comunicazione ricevuta.</p>}
       </section>
     </div>
   );
