@@ -5,12 +5,12 @@ Dashboard privata e mobile per monitorare pagamenti, assemblee, comunicazioni e 
 ## Come funziona
 
 - È pubblicata su Vercel: non servono PC acceso, Docker o server domestici.
-- Un Cron Job richiama la sincronizzazione una volta al giorno.
+- Un cron job di Vercel richiama la sincronizzazione una volta al giorno.
 - Dalla casella Gmail vengono lette solo le email con le etichette `CONDOMINIO EUGANEO` e `CONDOMINIO_ELABORATO`.
-- Gmail e Google Calendar sono usati esclusivamente in sola lettura.
+- Gmail e Google Calendar sono usati solo in lettura.
 - La dashboard salva soltanto oggetto, mittente, data, breve anteprima, numero di allegati e link originale.
 - Stato e refresh token Google sono cifrati con AES-256-GCM prima di essere salvati in un Vercel Blob privato.
-- L'accesso alla dashboard avviene con **Accedi con Google**: solo i due account Google autorizzati (Nicolò e Jessica) possono entrare, niente password da ricordare.
+- L’accesso alla dashboard avviene con **Accedi con Google**: solo i due account Google autorizzati (Nicolò e Jessica) possono entrare, niente password da ricordare.
 
 ## Configurazione una tantum
 
@@ -42,7 +42,7 @@ https://IL-TUO-PROGETTO.vercel.app/api/auth/google/callback
 https://IL-TUO-PROGETTO.vercel.app/api/google/callback
 ```
 
-**Importante:** nella schermata consenso OAuth porta lo stato da **Testing** a **In produzione**. In modalità Testing Google fa scadere il refresh token dopo 7 giorni e la sincronizzazione si ferma in silenzio (è la causa più comune di una dashboard "ferma"). Se compare l'avviso "autorizzazione scaduta", premi **Ricollega Google**.
+**Importante:** nella schermata consenso OAuth porta lo stato da **Testing** a **In produzione**. In modalità Testing Google fa scadere il refresh token dopo 7 giorni e la sincronizzazione si ferma in silenzio (è la causa più comune di una dashboard «ferma»). Se compare l'avviso "autorizzazione scaduta", premi **Ricollega Google**.
 
 L'account da usare è uno solo (`nic.forcolin@gmail.com`): serve sia per entrare sia per leggere Gmail e Calendar.
 

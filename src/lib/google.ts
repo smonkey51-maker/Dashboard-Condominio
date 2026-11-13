@@ -210,13 +210,12 @@ export async function syncGoogle() {
     failures.forEach((f) => console.error("Google sync partial failure", f.reason));
     // Keep whatever succeeded, and record the failure so the UI can show it.
     const reconnect = failures.some((f) => isRevoked(f.reason));
-    const reason = failures[0].reason;
     state.lastRun = {
       synced_at: new Date().toISOString(),
       email_count: emails.length,
       event_count: events.length,
       status: "error",
-      error: reconnect ? "Autorizzazione Google scaduta o revocata" : reason instanceof Error ? reason.message : "Errore sconosciuto",
+      error: reconnect ? "Autorizzazione Google scaduta o revocata" : "Errore durante la lettura di Gmail o Calendar",
       needs_reconnect: reconnect,
     };
   }

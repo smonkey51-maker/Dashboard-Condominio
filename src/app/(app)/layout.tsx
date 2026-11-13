@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link className="brand" href="/">Euganeo Casa</Link>
           <NavLinks variant="top" />
           <div className="topbar-actions">
-            {connected && <SyncButton label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={Boolean(problem)} />}
+            {connected && <SyncButton label={lastRun ? syncLabel(lastRun.synced_at) : "mai aggiornato"} problem={Boolean(problem)} />}
             <form action="/api/logout" method="post"><button className="link-button">Esci</button></form>
           </div>
         </header></div>
@@ -36,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {problem && (
             <div className="notice error">
               {problem.needs_reconnect
-                ? "L'autorizzazione Google è scaduta: ricollega l'account per riprendere gli aggiornamenti. "
+                ? "L’autorizzazione Google è scaduta: ricollega l’account per riprendere gli aggiornamenti. "
                 : `Ultima sincronizzazione non riuscita (${problem.error}). `}
               <a href="/api/google/connect"><u>Ricollega Google</u></a>
             </div>
