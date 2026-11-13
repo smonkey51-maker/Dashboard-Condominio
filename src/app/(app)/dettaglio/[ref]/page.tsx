@@ -29,7 +29,8 @@ export default async function Dettaglio({ params }: { params: Promise<{ ref: str
   if (payment) {
     rows.push(["Stato", paymentStatusLabels[payment.status]]);
     rows.push(["Scadenza", payment.due ? longDate(payment.due) : "Da verificare: nessuna data nel testo"]);
-    rows.push(["Importo", payment.amount ? `${payment.amount} (letto dal testo dell’email, da confermare)` : "Non indicato nel testo dell’email"]);
+    const from = payment.amountSource === "allegato" ? "dall’allegato" : payment.amountSource === "testo email" ? "dal testo dell’email" : "dall’oggetto o dall’anteprima";
+    rows.push(["Importo", payment.amount ? `${payment.amount} (letto ${from}, da confermare)` : payment.amountAmbiguous ? "Più importi nel testo, nessuno chiaramente quello richiesto: controlla l’originale" : item.extracted ? "Non trovato nel testo dell’email né negli allegati PDF" : "Non indicato nel testo dell’email"]);
     if (payment.due && payment.due.getTime() < new Date(item.occurred_at).getTime()) rows.push(["Da controllare", "La scadenza è precedente alla data dell’email: verifica il documento originale."]);
   }
   if (meeting) {

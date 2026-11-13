@@ -130,6 +130,8 @@ export type Payment = {
   item: SyncedItem;
   title: string;
   amount: string | null;
+  amountSource: "oggetto" | "testo email" | "allegato" | null;
+  amountAmbiguous: boolean;
   due: Date | null;
   rata: boolean;
   status: PaymentStatus;
@@ -142,14 +144,22 @@ export function paymentsOf(items: SyncedItem[]): Payment[] {
   const now = Date.now();
   const list: Payment[] = items.filter((i) => kindOf(i) === "payment").map((item) => {
     const text = `${item.title} ${item.summary || ""}`;
-    const due = extractDueDate(text, item.occurred_at);
+    const fromSubject = extractAmount(text);
+    const found = item.extracted;
+    const due = extractDueDate(text, item.occurred_at) ?? (found?.due ? new Date(found.due) : null);
     const status: PaymentStatus = CONFIRMED.test(text) ? "confermata" : !due ? "da-verificare" : due.getTime() >= now ? "futura" : "superata";
     const ageDays = (now - (due ?? new Date(item.occurred_at)).getTime()) / DAY;
     let section: Payment["section"] = "storico";
     if (status === "futura") section = "arrivo";
     else if (status === "da-verificare" && ageDays <= 60) section = "arrivo";
     else if (status === "superata" && ageDays <= 180) section = "superata";
-    return { item, title: normalizeTitle(item.title), amount: extractAmount(text), due, rata: isRata(text), status, section };
+    const amount = fromSubject ?? found?.amount ?? null;
+    return {
+      item, title: normalizeTitle(item.title), amount,
+      amountSource: fromSubject ? "oggetto" : found?.amount ? found.source : null,
+      amountAmbiguous: !amount && Boolean(found?.ambiguous),
+      due, rata: isRata(text), status, section,
+    };
   });
   const rank = { arrivo: 0, superata: 1, storico: 2 } as const;
   const key = (p: Payment) => (p.due ?? new Date(p.item.occurred_at)).getTime();
