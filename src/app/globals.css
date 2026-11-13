@@ -64,7 +64,7 @@ h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.
 
 html, body { overflow-x: clip; }
 /* Barra di stato verde (iOS in app installata: il contenuto passa sotto la barra). In Panoramica la fascia con la foto arriva fino in alto. */
-body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: #123f36; z-index: 100; pointer-events: none; }
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: #0f3d34; z-index: 100; pointer-events: none; }
 body:has(.home-band)::before { display: none; }
 h1, h2 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; color: var(--m3-primary); margin: 0; }
 p { margin: 0; }
