@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconChevron, IconCoin, IconUsers } from "../icons";
+import { IconChevron, IconCoin, IconUser, IconUsers } from "../icons";
 import SyncButton from "../SyncButton";
 import { CommunicationRow } from "../Rows";
 import { communicationsOf, documentsOf, itemRef, loadDashboard, longDate, meetingsOf, nextActionOf, syncLabel, timeOf, upcomingMeetings } from "@/lib/view";
@@ -13,12 +13,18 @@ export default async function Home() {
 
   return (
     <div className="home">
-      <header className="home-head">
-        <h1>Euganeo Casa</h1>
-        <p className="home-sub">Condominio Euganeo</p>
-        {connected && <SyncButton className="home-update" prefix="Ultimo aggiornamento: " label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={lastRun?.status === "error"} />}
+      <header className="home-band">
+        <div className="band-text">
+          <h1>Euganeo Casa</h1>
+          <p className="band-sub">Condominio Euganeo</p>
+          {connected && <SyncButton className="band-update" prefix="Ultimo aggiornamento: " label={lastRun ? syncLabel(lastRun.synced_at) : "mai"} problem={lastRun?.status === "error"} />}
+        </div>
+        <form action="/api/logout" method="post" className="band-user">
+          <button aria-label="Esci"><IconUser /></button>
+        </form>
       </header>
 
+      <div className="home-sheet">
       {action ? (
         <Link href={`/dettaglio/${itemRef(action.kind === "payment" ? action.payment.item : action.meeting.item)}`} className="priority">
           <span className="row-icon attention">{action.kind === "payment" ? <IconCoin /> : <IconUsers />}</span>
@@ -65,6 +71,7 @@ export default async function Home() {
         <div className="block-head"><h2>Ultime comunicazioni</h2><Link href="/comunicazioni">Tutte →</Link></div>
         {comms.length ? <div className="rows">{comms.slice(0, 3).map((c) => <CommunicationRow key={`${c.item.source}-${c.item.external_id}`} c={c} />)}</div> : <p className="empty">Nessuna comunicazione ricevuta.</p>}
       </section>
+      </div>
     </div>
   );
 }
