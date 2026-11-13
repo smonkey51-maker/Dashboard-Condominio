@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { loadState, saveState, type Attachment, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
 import { classify } from "./classify";
+import { extractFromTexts, type Extracted } from "./extract";
 
 const googleScopes = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -164,31 +165,99 @@ async function listEmailIds(gmail: ReturnType<typeof google.gmail>) {
   return [...ids].slice(0, MAX_EMAILS);
 }
 
-async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
+function decode(data?: string | null) {
+  return data ? Buffer.from(data, "base64url").toString("utf8") : "";
+}
+
+function bodyText(part: MessagePart | undefined): string {
+  if (!part) return "";
+  const plain: string[] = [];
+  const html: string[] = [];
+  const walk = (p: MessagePart) => {
+    if (p.mimeType === "text/plain" && !p.filename) plain.push(decode(p.body?.data));
+    else if (p.mimeType === "text/html" && !p.filename) html.push(decode(p.body?.data));
+    for (const child of p.parts || []) walk(child);
+  };
+  walk(part);
+  const text = plain.join("\n").trim() || html.join("\n").replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&euro;/g, "€").replace(/&amp;/g, "&");
+  return text.replace(/[ \t\r\f]+/g, " ").slice(0, 20000);
+}
+
+async function pdfText(buffer: Buffer) {
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const pdf = await getDocumentProxy(new Uint8Array(buffer));
+  const { text } = await extractText(pdf, { mergePages: true });
+  return text.slice(0, 20000);
+}
+
+// Amounts and due dates are often only in the body or in the attached PDF, not in the subject.
+// Only what is found is stored (never the text itself), and each email is read once.
+async function extractFor(gmail: ReturnType<typeof google.gmail>, id: string, payload: MessagePart | undefined, sentAt: string): Promise<Extracted> {
+  const sources: { label: "testo email" | "allegato"; text: string }[] = [];
+  const body = bodyText(payload);
+  if (body) sources.push({ label: "testo email", text: body });
+  const pdfs = attachmentList(payload).filter((a) => (/pdf/i.test(a.mime) || /\.pdf$/i.test(a.filename)) && a.size <= 3 * 1024 * 1024).slice(0, 2);
+  for (const att of pdfs) {
+    try {
+      const part = findPart(payload, att.part_id);
+      let data = part?.body?.data || null;
+      if (!data && part?.body?.attachmentId) {
+        data = (await gmail.users.messages.attachments.get({ userId: "me", messageId: id, id: part.body.attachmentId })).data.data || null;
+      }
+      if (data) sources.push({ label: "allegato", text: await pdfText(Buffer.from(data, "base64url")) });
+    } catch (error) {
+      console.error("PDF text extraction failed", error);
+    }
+  }
+  return extractFromTexts(sources, sentAt);
+}
+
+const MAX_NEW_EXTRACTIONS = 25; // keeps a sync well inside the function time limit; the rest follows next time
+
+async function fetchEmails(auth: ReturnType<typeof oauthClient>, previous: Map<string, SyncedItem>) {
   const gmail = google.gmail({ version: "v1", auth });
   const messageIds = await listEmailIds(gmail);
+  let budget = MAX_NEW_EXTRACTIONS;
 
   const fetchOne = async (id: string) => {
-    const response = await gmail.users.messages.get({ userId: "me", id, format: "full" });
+    const known = previous.get(`gmail:${id}`);
+    const complete = Boolean(known?.attachments !== undefined && (known.extracted || classify(known.title, known.attachment_count) !== "payment"));
+    // Already seen and fully read: only the light metadata (read/unread, subject) is refreshed.
+    const response = await gmail.users.messages.get(complete
+      ? { userId: "me", id, format: "metadata", metadataHeaders: ["Subject", "From"] }
+      : { userId: "me", id, format: "full" });
     const message = response.data;
     const headers = Object.fromEntries((message.payload?.headers || []).map((header) => [header.name?.toLowerCase(), header.value || ""]));
+    const occurredAt = new Date(Number(message.internalDate || Date.now())).toISOString();
+    const subject = headers.subject || "(senza oggetto)";
+    const unread = message.labelIds?.includes("UNREAD") ? 1 : 0;
+    if (complete && known) {
+      return { ...known, title: subject, sender: headers.from || known.sender, summary: message.snippet || known.summary, occurred_at: occurredAt, unread };
+    }
+    const payload = (message.payload || undefined) as MessagePart | undefined;
     const attachments = attachmentCount(message.payload || undefined);
-    return normalize({
+    const kind = classify(subject, attachments);
+    let extracted: Extracted | undefined = known?.extracted;
+    if (kind === "payment" && !extracted && budget > 0) {
+      budget -= 1;
+      extracted = await extractFor(gmail, id, payload, occurredAt);
+    }
+    return { ...normalize({
       source: "gmail",
       externalId: id,
-      kind: classify(headers.subject || "", attachments),
-      title: headers.subject || "(senza oggetto)",
+      kind,
+      title: subject,
       sender: headers.from || "",
       summary: message.snippet || "",
-      occurredAt: new Date(Number(message.internalDate || Date.now())).toISOString(),
+      occurredAt,
       endsAt: null,
       location: null,
       sourceUrl: `https://mail.google.com/mail/#all/${id}`,
-      unread: message.labelIds?.includes("UNREAD") ? 1 : 0,
+      unread,
       attachmentCount: attachments,
       fileTypes: attachmentTypes(message.payload || undefined),
-      attachments: attachmentList((message.payload || undefined) as MessagePart | undefined),
-    });
+      attachments: attachmentList(payload),
+    }), extracted };
   };
 
   // Chunked to stay under Gmail's per-user concurrency limits.
@@ -239,7 +308,7 @@ export async function syncGoogle() {
   const useCalendar = Boolean(state.googleRefreshToken || (!state.gmailRefreshToken && state.calendarRefreshToken));
 
   const [gmailResult, calendarResult] = await Promise.allSettled([
-    useGmail ? fetchEmails(auth) : Promise.resolve([] as SyncedItem[]),
+    useGmail ? fetchEmails(auth, new Map(state.items.map((item) => [`${item.source}:${item.external_id}`, item]))) : Promise.resolve([] as SyncedItem[]),
     useCalendar ? fetchEvents(auth) : Promise.resolve([] as SyncedItem[]),
   ]);
   const failures = [gmailResult, calendarResult].filter((r): r is PromiseRejectedResult => r.status === "rejected");

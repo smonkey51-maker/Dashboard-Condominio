@@ -37,3 +37,18 @@ export function extractDueDate(text: string, sentAtIso: string): Date | null {
 export function isRata(text: string) {
   return /\b(rata|rate|rateale|rateizzazione)\b/i.test(text);
 }
+
+// For long texts (email body, attachments): only dates introduced by a deadline keyword,
+// and the nearest one that is not already old when several rates are listed.
+export function extractKeywordDue(text: string, sentAtIso: string): Date | null {
+  const sentAt = new Date(sentAtIso).getTime();
+  const re = /(scadenz\w*|entro(?:\s+il)?|termine|versare\s+entro(?:\s+il)?)[^0-9\n]{0,30}(\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\d{1,2}(?:º|°)?\s+[a-zà-ù]+\.?(?:\s+\d{4})?)/gi;
+  const dates: Date[] = [];
+  for (const m of text.matchAll(re)) {
+    const d = extractDueDate(m[2], sentAtIso);
+    if (d) dates.push(d);
+  }
+  if (!dates.length) return null;
+  dates.sort((a, b) => a.getTime() - b.getTime());
+  return dates.find((d) => d.getTime() >= sentAt - 7 * 86400000) ?? dates[dates.length - 1];
+}

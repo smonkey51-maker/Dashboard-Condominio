@@ -1,5 +1,6 @@
-import { list, put } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 import { decryptSecret, encryptSecret } from "./crypto";
+import type { Extracted } from "./extract";
 
 const STATE_PATH = "euganeo/state.enc";
 
@@ -20,6 +21,7 @@ export type SyncedItem = {
   attachment_count: number;
   file_types?: string[];
   attachments?: Attachment[];
+  extracted?: Extracted;
 };
 
 export type SyncRun = {
@@ -43,22 +45,31 @@ export type AppState = {
 
 const emptyState = (): AppState => ({ items: [] });
 
-export async function loadState(): Promise<AppState> {
+// The saved state is read often (every page) and written rarely (a sync), so the last copy is
+// kept in memory and only revalidated with a conditional request (ETag): an unchanged state
+// costs one tiny round trip instead of a download plus decryption.
+let memo: { etag: string; state: AppState; checkedAt: number } | null = null;
+const FRESH_MS = 10_000;
+
+async function readState(force = false): Promise<AppState> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return emptyState();
-  try {
-    const { blobs } = await list({ prefix: STATE_PATH, limit: 1 });
-    const match = blobs.find((blob) => blob.pathname === STATE_PATH);
-    if (!match) return emptyState();
-    const response = await fetch(match.downloadUrl, {
-      headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-    });
-    if (!response.ok) throw new Error(`Failed to download state: ${response.status}`);
-    const encrypted = await response.text();
-    return JSON.parse(decryptSecret(encrypted)) as AppState;
-  } catch (error) {
-    console.error("Failed to read saved state from Vercel Blob", error);
-    return emptyState();
+  if (!force && memo && Date.now() - memo.checkedAt < FRESH_MS) return memo.state;
+  const res = await get(STATE_PATH, { access: "private", useCache: false, ifNoneMatch: memo?.etag });
+  if (!res) return emptyState();
+  if (res.statusCode === 304 && memo) {
+    memo.checkedAt = Date.now();
+    return memo.state;
   }
+  if (!res.stream) throw new Error("Empty response while reading the saved state");
+  const state = JSON.parse(decryptSecret(await new Response(res.stream).text())) as AppState;
+  memo = { etag: res.blob.etag, state, checkedAt: Date.now() };
+  return state;
+}
+
+// For the sync: always revalidated, and a copy that can be modified. A read error must not
+// look like "no data", otherwise the next save would overwrite the real state.
+export async function loadState(): Promise<AppState> {
+  return structuredClone(await readState(true));
 }
 
 export async function saveState(state: AppState) {
@@ -68,10 +79,17 @@ export async function saveState(state: AppState) {
     allowOverwrite: true,
     contentType: "text/plain; charset=utf-8",
   });
+  memo = null;
 }
 
 export async function dashboardData() {
-  const state = await loadState();
+  let state: AppState;
+  try {
+    state = await readState();
+  } catch (error) {
+    console.error("Failed to read saved state from Vercel Blob", error);
+    state = emptyState();
+  }
   return {
     items: [...state.items].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).slice(0, 100),
     lastRun: state.lastRun,
