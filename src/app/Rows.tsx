@@ -1,20 +1,20 @@
 import Link from "next/link";
-import { IconBell, IconChevron, IconCoin, IconFile, IconUsers, IconWrench } from "./icons";
+import { IconBell, IconChevron, IconCoin, IconFile, IconSend, IconUsers, IconWrench } from "./icons";
 import { categoryLabels, itemRef, longDate, paymentStatusLabels, shortDate, timeOf, type Category, type Communication, type DocEntry, type Meeting, type Payment } from "@/lib/view";
 
 const icons: Record<string, React.ComponentType<{ className?: string }>> = {
   payment: IconCoin, assembly: IconUsers, document: IconFile, maintenance: IconWrench, update: IconBell, event: IconUsers,
 };
 
-export function CategoryIcon({ kind }: { kind: Category | string }) {
-  const Icon = icons[kind] ?? IconBell;
+export function CategoryIcon({ kind, send }: { kind: Category | string; send?: boolean }) {
+  const Icon = send && kind === "payment" ? IconSend : icons[kind] ?? IconBell;
   return <span className={`row-icon ${kind === "payment" ? "attention" : ""}`}><Icon /></span>;
 }
 
-function Row({ item, kind, className, children, side }: { item: Parameters<typeof itemRef>[0]; kind: string; className?: string; children: React.ReactNode; side?: React.ReactNode }) {
+function Row({ item, kind, className, children, side, send }: { item: Parameters<typeof itemRef>[0]; kind: string; className?: string; children: React.ReactNode; side?: React.ReactNode; send?: boolean }) {
   return (
     <Link href={`/dettaglio/${itemRef(item)}`} className={`row${className ? ` ${className}` : ""}`}>
-      <CategoryIcon kind={kind} />
+      <CategoryIcon kind={kind} send={send} />
       <span className="row-main">{children}</span>
       {side && <span className="row-side">{side}</span>}
       <IconChevron className="chev" />
@@ -47,7 +47,7 @@ export function MeetingRow({ m }: { m: Meeting }) {
 
 export function DocumentRow({ d }: { d: DocEntry }) {
   return (
-    <Row item={d.item} kind="document" side={d.item.attachment_count > 0 ? `${d.item.attachment_count} all.` : undefined}>
+    <Row item={d.item} kind="document" side={d.item.attachment_count > 0 ? `${d.item.attachment_count} allegat${d.item.attachment_count === 1 ? "o" : "i"}` : undefined}>
       <span className="row-title">{d.title}</span>
       <span className="row-meta">{d.type} · {shortDate(d.item.occurred_at)}</span>
     </Row>
@@ -56,7 +56,7 @@ export function DocumentRow({ d }: { d: DocEntry }) {
 
 export function CommunicationRow({ c }: { c: Communication }) {
   return (
-    <Row item={c.item} kind={c.kind} className={c.item.unread ? "unread-row" : ""}>
+    <Row item={c.item} kind={c.kind} send className={c.item.unread ? "unread-row" : ""}>
       <span className="row-title">{c.item.unread ? <i className="unread" aria-label="Da leggere" /> : null}{c.title}</span>
       <span className="row-meta">{categoryLabels[c.kind] ?? c.type} · {shortDate(c.item.occurred_at)}</span>
     </Row>

@@ -131,3 +131,20 @@ export function IconUser({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconSend({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M21 3 10.5 13.5" />
+      <path d="M21 3 14.5 21l-4-7.5L3 9.5 21 3Z" />
+    </svg>
+  );
+}
+
+export function IconHomeFilled({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true" fill="currentColor">
+      <path d="M12 3.6 3.4 11.2a.8.8 0 0 0 .5 1.4h1.2V19a1.5 1.5 0 0 0 1.5 1.5H9.8V15h4.4v5.5h3.2A1.5 1.5 0 0 0 18.9 19v-6.4h1.2a.8.8 0 0 0 .5-1.4L12 3.6Z" stroke="none" />
+    </svg>
+  );
+}

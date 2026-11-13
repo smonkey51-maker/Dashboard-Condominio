@@ -210,6 +210,17 @@ export function communicationsOf(items: SyncedItem[]): Communication[] {
 
 // ---------- next action (Panoramica) ----------
 
+// Share of the time between the email and the due date that has already passed (0-100).
+// Only for payments with a known due date; never an estimate of anything else.
+export function elapsedPct(p: Payment): number | null {
+  if (!p.due) return null;
+  const from = new Date(p.item.occurred_at).getTime();
+  const to = p.due.getTime();
+  if (to <= from) return null;
+  return Math.round(Math.min(1, Math.max(0, (Date.now() - from) / (to - from))) * 100);
+}
+
+
 export type NextAction =
   | { kind: "payment"; payment: Payment }
   | { kind: "meeting"; meeting: Meeting }

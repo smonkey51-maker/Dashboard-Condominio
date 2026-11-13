@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { loadState, saveState, type SyncedItem } from "./db";
+import { loadState, saveState, type Attachment, type SyncedItem } from "./db";
 import { decryptSecret, encryptSecret } from "./crypto";
 import { classify } from "./classify";
 
@@ -62,6 +62,43 @@ function attachmentCount(part: { filename?: string | null; parts?: unknown[] | n
   return (part.filename ? 1 : 0) + children.reduce((sum, child) => sum + attachmentCount(child), 0);
 }
 
+type MessagePart = { partId?: string | null; filename?: string | null; mimeType?: string | null; body?: { size?: number | null; attachmentId?: string | null; data?: string | null } | null; parts?: MessagePart[] | null };
+
+function attachmentList(part: MessagePart | undefined, found: Attachment[] = []): Attachment[] {
+  if (!part) return found;
+  if (part.filename && part.partId) found.push({ part_id: part.partId, filename: part.filename, mime: part.mimeType || "application/octet-stream", size: part.body?.size || 0 });
+  for (const child of part.parts || []) attachmentList(child, found);
+  return found;
+}
+
+function findPart(part: MessagePart | undefined, partId: string): MessagePart | undefined {
+  if (!part) return undefined;
+  if (part.partId === partId) return part;
+  for (const child of part.parts || []) {
+    const hit = findPart(child, partId);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+// Attachments are never stored: the file is fetched from Gmail when it is opened.
+export async function fetchAttachment(messageId: string, partId: string) {
+  const state = await loadState();
+  const auth = clientFor(state.googleRefreshToken || state.gmailRefreshToken);
+  if (!auth) throw new Error("Nessun account Google collegato");
+  const gmail = google.gmail({ version: "v1", auth });
+  const message = await gmail.users.messages.get({ userId: "me", id: messageId, format: "full" });
+  const part = findPart((message.data.payload || undefined) as MessagePart | undefined, partId);
+  if (!part) return null;
+  let data = part.body?.data || null;
+  if (!data && part.body?.attachmentId) {
+    const att = await gmail.users.messages.attachments.get({ userId: "me", messageId, id: part.body.attachmentId });
+    data = att.data.data || null;
+  }
+  if (!data) return null;
+  return { buffer: Buffer.from(data, "base64url"), mime: part.mimeType || "application/octet-stream", filename: part.filename || "allegato" };
+}
+
 function attachmentTypes(part: { filename?: string | null; parts?: unknown[] | null } | undefined, found = new Set<string>()): string[] {
   if (!part) return [...found];
   const ext = part.filename?.split(".").pop()?.toLowerCase();
@@ -70,13 +107,14 @@ function attachmentTypes(part: { filename?: string | null; parts?: unknown[] | n
   return [...found];
 }
 
-type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count" | "file_types"> & {
+type IncomingItem = Omit<SyncedItem, "external_id" | "occurred_at" | "ends_at" | "source_url" | "attachment_count" | "file_types" | "attachments"> & {
   externalId: string;
   occurredAt: string;
   endsAt: string | null;
   sourceUrl: string | null;
   attachmentCount: number;
   fileTypes?: string[];
+  attachments?: Attachment[];
 };
 
 function normalize(item: IncomingItem): SyncedItem {
@@ -94,6 +132,7 @@ function normalize(item: IncomingItem): SyncedItem {
     unread: item.unread,
     attachment_count: item.attachmentCount,
     file_types: item.fileTypes,
+    attachments: item.attachments,
   };
 }
 
@@ -148,6 +187,7 @@ async function fetchEmails(auth: ReturnType<typeof oauthClient>) {
       unread: message.labelIds?.includes("UNREAD") ? 1 : 0,
       attachmentCount: attachments,
       fileTypes: attachmentTypes(message.payload || undefined),
+      attachments: attachmentList((message.payload || undefined) as MessagePart | undefined),
     });
   };
 

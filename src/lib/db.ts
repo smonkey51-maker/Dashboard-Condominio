@@ -3,6 +3,8 @@ import { decryptSecret, encryptSecret } from "./crypto";
 
 const STATE_PATH = "euganeo/state.enc";
 
+export type Attachment = { part_id: string; filename: string; mime: string; size: number };
+
 export type SyncedItem = {
   source: string;
   external_id: string;
@@ -17,6 +19,7 @@ export type SyncedItem = {
   unread: number;
   attachment_count: number;
   file_types?: string[];
+  attachments?: Attachment[];
 };
 
 export type SyncRun = {
