@@ -1,61 +1,64 @@
-import { IconPin } from "./icons";
-import { longDate, mapsUrl, shortDate, timeOf, type Communication, type DocEntry, type Meeting, type Payment } from "@/lib/view";
+import Link from "next/link";
+import { IconBell, IconChevron, IconCoin, IconFile, IconSend, IconUsers, IconWrench } from "./icons";
+import { categoryLabels, itemRef, longDate, paymentStatusLabels, shortDate, timeOf, type Category, type Communication, type DocEntry, type Meeting, type Payment } from "@/lib/view";
 
-function Row({ href, className, children }: { href: string | null; className?: string; children: React.ReactNode }) {
-  const cls = `row${className ? ` ${className}` : ""}`;
-  return href ? <a className={cls} href={href} target="_blank" rel="noreferrer">{children}</a> : <div className={cls}>{children}</div>;
+const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+  payment: IconCoin, assembly: IconUsers, document: IconFile, maintenance: IconWrench, update: IconBell, event: IconUsers,
+};
+
+export function CategoryIcon({ kind, send }: { kind: Category | string; send?: boolean }) {
+  const Icon = send && kind === "payment" ? IconSend : icons[kind] ?? IconBell;
+  return <span className={`row-icon ${kind === "payment" ? "attention" : ""}`}><Icon /></span>;
+}
+
+function Row({ item, kind, className, children, side, send }: { item: Parameters<typeof itemRef>[0]; kind: string; className?: string; children: React.ReactNode; side?: React.ReactNode; send?: boolean }) {
+  return (
+    <Link href={`/dettaglio/${itemRef(item)}`} className={`row${className ? ` ${className}` : ""}`}>
+      <CategoryIcon kind={kind} send={send} />
+      <span className="row-main">{children}</span>
+      {side && <span className="row-side">{side}</span>}
+      <IconChevron className="chev" />
+    </Link>
+  );
 }
 
 export function PaymentRow({ p }: { p: Payment }) {
-  const className = p.past ? "past" : p.rata ? "rata" : undefined;
   return (
-    <Row href={p.item.source_url} className={className}>
-      <span className="row-main">
-        <span className="row-title">{p.rata && <em className="tag">Rata</em>}{p.title}</span>
-        <span className="row-meta">{p.due ? `Scadenza ${longDate(p.due)}` : `Email del ${shortDate(p.item.occurred_at)}`}</span>
-      </span>
-      {p.amount && <span className="row-side amount">{p.amount}</span>}
+    <Row item={p.item} kind="payment" className={`${p.status === "superata" || p.section === "storico" ? "muted" : ""}`}
+      side={p.amount ? <span className="amount">{p.amount}</span> : undefined}>
+      <span className="row-title">{p.title}</span>
+      {p.due && <span className="row-meta">Scadenza {shortDate(p.due)}</span>}
+      <span className="row-chip"><span className={`chip ${p.status}`}>{paymentStatusLabels[p.status]}</span></span>
     </Row>
   );
 }
 
 export function MeetingRow({ m }: { m: Meeting }) {
   return (
-    <Row href={m.item.source_url} className={m.past ? "past" : undefined}>
-      <span className="row-main">
-        <span className="row-title">{m.title}</span>
-        <span className="row-meta">
-          {m.hasTime ? `Ore ${timeOf(m.when)}` : m.item.source === "calendar" ? "Calendar" : "Email"}
-          {m.item.location && <> · <IconPin className="pin" /> {m.item.location}</>}
-        </span>
+    <Row item={m.item} kind="assembly" className={m.past ? "muted" : ""}>
+      <span className="row-title">{m.title}</span>
+      <span className="row-meta">
+        {m.whenKnown ? `${longDate(m.when)}${m.hasTime ? ` · ore ${timeOf(m.when)}` : ""}` : `Data da verificare · email del ${shortDate(m.item.occurred_at)}`}
+        {m.item.location ? ` · ${m.item.location}` : ""}
       </span>
-      <span className="row-side">{longDate(m.when)}</span>
     </Row>
   );
 }
 
 export function DocumentRow({ d }: { d: DocEntry }) {
   return (
-    <Row href={d.item.source_url}>
-      <span className="row-main">
-        <span className="row-title">{d.title}</span>
-        <span className="row-meta">{d.type}</span>
-      </span>
-      <span className="row-side">{shortDate(d.item.occurred_at)}</span>
+    <Row item={d.item} kind="document" side={d.item.attachment_count > 0 ? `${d.item.attachment_count} allegat${d.item.attachment_count === 1 ? "o" : "i"}` : undefined}>
+      <span className="row-title">{d.title}</span>
+      <span className="row-meta">{d.type} · {shortDate(d.item.occurred_at)}</span>
     </Row>
   );
 }
 
 export function CommunicationRow({ c }: { c: Communication }) {
   return (
-    <Row href={c.item.source_url} className={c.item.unread ? "unread-row" : undefined}>
-      <span className="row-main">
-        <span className="row-title">{c.item.unread ? <i className="unread" aria-label="Da leggere" /> : null}{c.title}</span>
-        <span className="row-meta">{c.type}</span>
-      </span>
-      <span className="row-side">{shortDate(c.item.occurred_at)}</span>
+    <Row item={c.item} kind={c.kind} send className={c.item.unread ? "unread-row" : ""}>
+      <span className="row-title">{c.item.unread ? <i className="unread" aria-label="Da leggere" /> : null}{c.title}</span>
+      <span className="row-meta">{categoryLabels[c.kind] ?? c.type} · {shortDate(c.item.occurred_at)}</span>
     </Row>
   );
 }
-
-export { mapsUrl };

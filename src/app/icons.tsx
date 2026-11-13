@@ -98,3 +98,53 @@ export function IconRefresh({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconWrench({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M14.5 6.5a4 4 0 0 0 4.9 4.9l-8.8 8.8a2.1 2.1 0 0 1-3-3l8.8-8.8a4 4 0 0 0-1.9-1.9z" />
+    </svg>
+  );
+}
+
+export function IconChevron({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="m9.5 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+export function IconBack({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="m14.5 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+export function IconUser({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="12" cy="9" r="3.4" />
+      <path d="M5.5 19.5c.8-3.2 3.3-4.8 6.5-4.8s5.7 1.6 6.5 4.8" />
+    </svg>
+  );
+}
+
+export function IconSend({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M21 3 10.5 13.5" />
+      <path d="M21 3 14.5 21l-4-7.5L3 9.5 21 3Z" />
+    </svg>
+  );
+}
+
+export function IconHomeFilled({ className }: IconProps) {
+  return (
+    <svg {...base} className={className} aria-hidden="true" fill="currentColor">
+      <path d="M12 3.6 3.4 11.2a.8.8 0 0 0 .5 1.4h1.2V19a1.5 1.5 0 0 0 1.5 1.5H9.8V15h4.4v5.5h3.2A1.5 1.5 0 0 0 18.9 19v-6.4h1.2a.8.8 0 0 0 .5-1.4L12 3.6Z" stroke="none" />
+    </svg>
+  );
+}
